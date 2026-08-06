@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tourism — Smart Village Portal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="config.js"></script><script src="navbar.js"></script><script>renderNav("tourists")</script>
+<div class="page">
+  <div class="page-header">
+    <h1><span class="ph-icon">📍</span> Tourist Spots</h1>
+    <button class="btn btn-primary" onclick="openModal()" id="addBtn" style="display:none">＋ Add Spot</button>
+  </div>
+  <div id="listWrap"></div>
+</div>
+
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="mTitle">Add Tourist Spot</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Name *</label><input id="fName" placeholder="Name of place"/></div>
+      <div class="form-group"><label>Type</label>
+        <select id="fType"><option>TEMPLE</option><option>LAKE</option><option>FOREST</option><option>HISTORICAL</option><option>WATERFALL</option><option>FARM</option><option>OTHER</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description *</label><textarea id="fDesc" placeholder="Describe this place..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Location</label><input id="fLoc" placeholder="Area / direction"/></div>
+      <div class="form-group"><label>Nearest Landmark</label><input id="fLand" placeholder="Near..."/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Best Time to Visit</label><input id="fTime" placeholder="e.g. October – February"/></div>
+      <div class="form-group"><label>Entry Fee</label><input id="fFee" placeholder="Free / ₹20 per person"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSpot()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let editId=null;
+if(isAdmin()) document.getElementById("addBtn").style.display="flex";
+const typeEmoji={TEMPLE:"🕌",LAKE:"💧",FOREST:"🌳",HISTORICAL:"🏛️",WATERFALL:"🌊",FARM:"🌾",OTHER:"📍"};
+const typeBadge={TEMPLE:"badge-amber",LAKE:"badge-blue",FOREST:"badge-green",HISTORICAL:"badge-purple",WATERFALL:"badge-teal",FARM:"badge-green",OTHER:"badge-gray"};
+
+async function load(){
+  const el=document.getElementById("listWrap");el.innerHTML='<div style="color:var(--muted);padding:20px">Loading...</div>';
+  try{
+    const data=await api("GET","/api/tourist-spots");
+    if(!data.length){el.innerHTML='<div class="empty"><div class="ei">📍</div><p>No tourist spots added yet</p></div>';return;}
+    el.innerHTML='<div class="card-grid">'+data.map(s=>`
+      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:700;font-size:15px">${typeEmoji[s.type]||"📍"} ${s.name}</div>
+          <span class="badge ${typeBadge[s.type]||'badge-gray'}" style="flex-shrink:0">${s.type}</span>
+        </div>
+        ${s.location?`<div style="font-size:13px;color:var(--muted)">📍 ${s.location}</div>`:''}
+        ${s.nearestLandmark?`<div style="font-size:13px;color:var(--muted)">🗺️ Near: ${s.nearestLandmark}</div>`:''}
+        ${s.bestTimeToVisit?`<div style="font-size:13px;color:var(--muted)">🌤️ Best time: ${s.bestTimeToVisit}</div>`:''}
+        ${s.entryFee?`<div style="font-size:13px;font-weight:600;color:var(--teal)">🎫 Entry: ${s.entryFee}</div>`:''}
+        <div style="font-size:13px;color:#444;line-height:1.5">${s.description}</div>
+        ${isAdmin()?`<div style="margin-top:4px;display:flex;gap:6px">
+          <button class="btn btn-sm btn-amber" onclick='editSpot(${JSON.stringify(s).replace(/'/g,"&#39;")})'>Edit</button>
+          <button class="btn btn-sm btn-red" onclick="deleteSpot(${s.id})">Delete</button>
+        </div>`:''}
+      </div>`).join('')+'</div>';
+  }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
+}
+
+function openModal(s=null){editId=s?s.id:null;document.getElementById("mTitle").textContent=s?"Edit Spot":"Add Tourist Spot";document.getElementById("fName").value=s?.name||"";document.getElementById("fDesc").value=s?.description||"";document.getElementById("fLoc").value=s?.location||"";document.getElementById("fLand").value=s?.nearestLandmark||"";document.getElementById("fTime").value=s?.bestTimeToVisit||"";document.getElementById("fFee").value=s?.entryFee||"";document.getElementById("fType").value=s?.type||"TEMPLE";document.getElementById("modal").classList.remove("hidden");}
+function closeModal(){document.getElementById("modal").classList.add("hidden");}
+function editSpot(s){openModal(s);}
+async function saveSpot(){
+  const body={name:document.getElementById("fName").value,description:document.getElementById("fDesc").value,type:document.getElementById("fType").value,location:document.getElementById("fLoc").value,nearestLandmark:document.getElementById("fLand").value,bestTimeToVisit:document.getElementById("fTime").value,entryFee:document.getElementById("fFee").value};
+  if(!body.name||!body.description){toast("Name and description required","error");return;}
+  try{if(editId)await api("PUT",`/api/tourist-spots/${editId}`,body);else await api("POST","/api/tourist-spots",body);toast("Saved!");closeModal();load();}catch(e){toast(e.message,"error");}
+}
+async function deleteSpot(id){if(!confirm("Delete?"))return;try{await api("DELETE",`/api/tourist-spots/${id}`);toast("Deleted");load();}catch(e){toast(e.message,"error");}}
+load();
+</script>
+</body>
+</html>
