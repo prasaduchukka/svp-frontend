@@ -1,54 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Education — Smart Village Portal</title>
 <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<script src="config.js"></script><script src="navbar.js"></script><script>renderNav("education")</script>
+</head><body>
+<script src="config.js"></script><script src="lang.js"></script><script src="navbar.js"></script>
+<script>renderNav("education")</script>
 <div class="page">
   <div class="page-header">
-    <h1><span class="ph-icon">📚</span> Education</h1>
-    <button class="btn btn-primary" onclick="openModal()" id="addBtn" style="display:none">＋ Add Entry</button>
+    <h1>📚 <span id="pageTitle"></span></h1>
+    <button class="btn btn-primary" id="addBtn" style="display:none" onclick="openModal()"></button>
   </div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('',this)">All</button>
-    <button class="tab-btn" onclick="switchTab('SCHOLARSHIP',this)">🏆 Scholarships</button>
-    <button class="tab-btn" onclick="switchTab('SCHOOL_INFO',this)">🏫 Schools</button>
-    <button class="tab-btn" onclick="switchTab('EXAM_RESULT',this)">📊 Results</button>
-    <button class="tab-btn" onclick="switchTab('COACHING',this)">📖 Coaching</button>
-    <button class="tab-btn" onclick="switchTab('AWARENESS',this)">📣 Awareness</button>
-  </div>
+  <div class="tabs" id="eduTabs"></div>
   <div id="listWrap"></div>
 </div>
 
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
-    <div class="modal-header"><h2 id="mTitle">Add Education Entry</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-header"><h2 id="mTitle"></h2><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="form-row">
-      <div class="form-group"><label>Title *</label><input id="fTitle" placeholder="Title"/></div>
-      <div class="form-group"><label>Type *</label>
-        <select id="fType"><option>SCHOLARSHIP</option><option>SCHOOL_INFO</option><option>EXAM_RESULT</option><option>COACHING</option><option>DIGITAL_LITERACY</option><option>AWARENESS</option></select>
-      </div>
+      <div class="form-group"><label id="lbl-title"></label><input id="fTitle"/></div>
+      <div class="form-group"><label id="lbl-type"></label><select id="fType"></select></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Institution</label><input id="fInst" placeholder="School / College / Org"/></div>
-      <div class="form-group"><label>Contact Person</label><input id="fContact" placeholder="Name"/></div>
+      <div class="form-group"><label id="lbl-inst"></label><input id="fInst"/></div>
+      <div class="form-group"><label id="lbl-contact"></label><input id="fContact"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Phone</label><input id="fPhone" placeholder="Phone number"/></div>
-      <div class="form-group"><label>Amount / Benefit</label><input id="fAmt" placeholder="e.g. ₹10,000/year"/></div>
+      <div class="form-group"><label id="lbl-phone"></label><input id="fPhone"/></div>
+      <div class="form-group"><label id="lbl-amt"></label><input id="fAmt"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Last Date</label><input id="fLast" placeholder="e.g. 31-Mar-2025"/></div>
-      <div class="form-group"><label>Eligibility</label><input id="fElig" placeholder="Who can apply?"/></div>
+      <div class="form-group"><label id="lbl-last"></label><input id="fLast"/></div>
+      <div class="form-group"><label id="lbl-elig"></label><input id="fElig"/></div>
     </div>
-    <div class="form-group"><label>Application Link</label><input id="fLink" placeholder="https://..."/></div>
-    <div class="form-group"><label>Description</label><textarea id="fDesc" placeholder="Details..."></textarea></div>
+    <div class="form-group"><label id="lbl-link"></label><input id="fLink"/></div>
+    <div class="form-group"><label id="lbl-desc"></label><textarea id="fDesc"></textarea></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+      <button class="btn btn-ghost" id="btnCancel" onclick="closeModal()"></button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveEntry()"></button>
     </div>
   </div>
 </div>
@@ -56,47 +46,81 @@
 <script>
 let currentType="";
 if(isAdmin()) document.getElementById("addBtn").style.display="flex";
-const typeEmoji={SCHOLARSHIP:"🏆",SCHOOL_INFO:"🏫",EXAM_RESULT:"📊",COACHING:"📖",DIGITAL_LITERACY:"💻",AWARENESS:"📣"};
-const typeBadge={SCHOLARSHIP:"badge-gold",SCHOOL_INFO:"badge-blue",EXAM_RESULT:"badge-green",COACHING:"badge-teal",DIGITAL_LITERACY:"badge-purple",AWARENESS:"badge-amber"};
 
-function switchTab(t,btn){currentType=t;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");load();}
+const eduTypes=[
+  ["SCHOLARSHIP","🏆",getLang()==="te"?"స్కాలర్షిప్లు":"Scholarships","badge-gold"],
+  ["SCHOOL_INFO","🏫",getLang()==="te"?"పాఠశాలలు":"Schools","badge-blue"],
+  ["EXAM_RESULT","📊",getLang()==="te"?"ఫలితాలు":"Results","badge-green"],
+  ["COACHING","📖",getLang()==="te"?"కోచింగ్":"Coaching","badge-teal"],
+  ["DIGITAL_LITERACY","💻",getLang()==="te"?"డిజిటల్ అక్షరాస్యత":"Digital Literacy","badge-purple"],
+  ["AWARENESS","📣",getLang()==="te"?"అవగాహన":"Awareness","badge-amber"]
+];
+
+function applyLang(){
+  document.getElementById("pageTitle").textContent = t("education");
+  document.getElementById("addBtn").textContent    = "＋ " + t("add_entry");
+  document.getElementById("mTitle").textContent    = t("add_entry");
+  document.getElementById("lbl-title").textContent = getLang()==="te"?"శీర్షిక *":"Title *";
+  document.getElementById("lbl-type").textContent  = t("type");
+  document.getElementById("lbl-inst").textContent  = t("institution");
+  document.getElementById("lbl-contact").textContent= t("contact_person");
+  document.getElementById("lbl-phone").textContent = t("phone");
+  document.getElementById("lbl-amt").textContent   = getLang()==="te"?"మొత్తం / ప్రయోజనం":"Amount / Benefit";
+  document.getElementById("lbl-last").textContent  = t("last_date");
+  document.getElementById("lbl-elig").textContent  = t("eligibility");
+  document.getElementById("lbl-link").textContent  = t("app_link");
+  document.getElementById("lbl-desc").textContent  = t("description");
+  document.getElementById("btnCancel").textContent = t("cancel");
+  document.getElementById("btnSave").textContent   = t("save");
+
+  document.getElementById("fType").innerHTML = eduTypes.map(([v,ic,l])=>`<option value="${v}">${ic} ${l}</option>`).join("");
+
+  const allTab = getLang()==="te"?"అన్నీ":"All";
+  document.getElementById("eduTabs").innerHTML =
+    `<button class="tab-btn active" onclick="switchTab('',this)">${allTab}</button>` +
+    eduTypes.map(([v,ic,l])=>`<button class="tab-btn" onclick="switchTab('${v}',this)">${ic} ${l}</button>`).join("");
+}
+applyLang();
+
+function switchTab(tp,btn){currentType=tp;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");load();}
 
 async function load(){
-  const el=document.getElementById("listWrap");el.innerHTML='<div style="color:var(--muted);padding:20px">Loading...</div>';
+  const el=document.getElementById("listWrap");
+  el.innerHTML=`<div style="color:var(--muted);padding:20px">${t("loading")}</div>`;
   try{
     const path=currentType?`/api/education?type=${currentType}`:"/api/education";
     const data=await api("GET",path);
-    if(!data.length){el.innerHTML='<div class="empty"><div class="ei">📚</div><p>No entries found</p></div>';return;}
-    el.innerHTML='<div class="card-grid">'+data.map(e=>`
-      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="ei">📚</div><p>${t("no_education")}</p></div>`;return;}
+    el.innerHTML='<div class="card-grid">'+data.map(e=>{
+      const et=eduTypes.find(x=>x[0]===e.type)||["","📚","","badge-gray"];
+      return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div style="font-weight:700;font-size:15px">${typeEmoji[e.type]||"📚"} ${e.title}</div>
-          <span class="badge ${typeBadge[e.type]||'badge-gray'}" style="flex-shrink:0">${e.type.replace("_"," ")}</span>
+          <div style="font-weight:700;font-size:14px">${et[1]} ${e.title}</div>
+          <span class="badge ${et[3]}" style="flex-shrink:0">${et[2]||e.type}</span>
         </div>
-        ${e.institution?`<div style="font-size:13px;color:var(--muted)">🏫 ${e.institution}</div>`:''}
-        ${e.amount?`<div style="font-size:13px;font-weight:600;color:var(--green)">💰 ${e.amount}</div>`:''}
-        ${e.eligibility?`<div style="font-size:13px;color:var(--muted)">✅ Eligible: ${e.eligibility}</div>`:''}
-        ${e.lastDate?`<div style="font-size:13px;color:var(--red)">📅 Last Date: ${e.lastDate}</div>`:''}
-        ${e.contactPerson?`<div style="font-size:13px;color:var(--muted)">👤 ${e.contactPerson}${e.phone?' · 📞 '+e.phone:''}</div>`:''}
-        ${e.description?`<div style="font-size:13px;color:#444;line-height:1.5">${e.description}</div>`:''}
-        <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">
-          ${e.applicationLink?`<a href="${e.applicationLink}" target="_blank" class="btn btn-sm btn-teal">Apply / View ↗</a>`:''}
-          ${isAdmin()?`<button class="btn btn-sm btn-red" onclick="deleteEntry(${e.id})">Delete</button>`:''}
+        ${e.institution?`<div style="font-size:13px;color:var(--muted)">🏫 ${e.institution}</div>`:""}
+        ${e.amount?`<div style="font-size:13px;font-weight:600;color:var(--green)">💰 ${e.amount}</div>`:""}
+        ${e.eligibility?`<div style="font-size:13px;color:var(--muted)">✅ ${t("eligibility")}: ${e.eligibility}</div>`:""}
+        ${e.lastDate?`<div style="font-size:13px;color:var(--red)">📅 ${t("last_date")}: ${e.lastDate}</div>`:""}
+        ${e.contactPerson?`<div style="font-size:13px;color:var(--muted)">👤 ${e.contactPerson}${e.phone?" · 📞 "+e.phone:""}</div>`:""}
+        ${e.description?`<div style="font-size:13px;color:#444;line-height:1.5">${e.description}</div>`:""}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          ${e.applicationLink?`<a href="${e.applicationLink}" target="_blank" class="btn btn-sm btn-teal">${t("app_link")} ↗</a>`:""}
+          ${isAdmin()?`<button class="btn btn-sm btn-red" onclick="deleteEntry(${e.id})">${t("delete")}</button>`:""}
         </div>
-      </div>`).join('')+'</div>';
+      </div>`;
+    }).join('')+'</div>';
   }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
 }
 
 function openModal(){["fTitle","fInst","fContact","fPhone","fAmt","fLast","fElig","fLink","fDesc"].forEach(id=>document.getElementById(id).value="");document.getElementById("modal").classList.remove("hidden");}
 function closeModal(){document.getElementById("modal").classList.add("hidden");}
-
 async function saveEntry(){
   const body={title:document.getElementById("fTitle").value,type:document.getElementById("fType").value,institution:document.getElementById("fInst").value,contactPerson:document.getElementById("fContact").value,phone:document.getElementById("fPhone").value,amount:document.getElementById("fAmt").value,lastDate:document.getElementById("fLast").value,eligibility:document.getElementById("fElig").value,applicationLink:document.getElementById("fLink").value,description:document.getElementById("fDesc").value};
-  if(!body.title){toast("Title required","error");return;}
-  try{await api("POST","/api/education",body);toast("Added!");closeModal();load();}catch(e){toast(e.message,"error");}
+  if(!body.title){toast(getLang()==="te"?"శీర్షిక అవసరం":"Title required","error");return;}
+  try{await api("POST","/api/education",body);toast(t("save"));closeModal();load();}catch(e){toast(e.message,"error");}
 }
-async function deleteEntry(id){if(!confirm("Delete?"))return;try{await api("DELETE",`/api/education/${id}`);toast("Deleted");load();}catch(e){toast(e.message,"error");}}
+async function deleteEntry(id){if(!confirm(getLang()==="te"?"తొలగించాలా?":"Delete?"))return;try{await api("DELETE",`/api/education/${id}`);toast(t("delete"));load();}catch(e){toast(e.message,"error");}}
 load();
 </script>
-</body>
-</html>
+</body></html>

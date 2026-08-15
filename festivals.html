@@ -1,467 +1,347 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Festivals — Smart Village Portal</title>
 <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<script src="config.js"></script><script src="navbar.js"></script><script>renderNav("festivals")</script>
-
+</head><body>
+<script src="config.js"></script><script src="lang.js"></script><script src="navbar.js"></script>
+<script>renderNav("festivals")</script>
 <div class="page">
   <div class="page-header">
-    <h1><span class="ph-icon">🎉</span> Festivals & Events</h1>
-    <button class="btn btn-primary" onclick="openAddFestival()" id="addBtn" style="display:none">＋ Add Festival</button>
+    <h1>🎉 <span id="pageTitle"></span></h1>
+    <button class="btn btn-primary" id="addBtn" style="display:none" onclick="openAddFestival()"></button>
   </div>
-
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('upcoming',this)">🔔 Upcoming</button>
-    <button class="tab-btn" onclick="switchTab('all',this)">All Festivals</button>
+    <button class="tab-btn active" onclick="switchTab('upcoming',this)" id="tabUpcoming"></button>
+    <button class="tab-btn" onclick="switchTab('all',this)" id="tabAll"></button>
   </div>
-
   <div id="festivalList"></div>
 </div>
 
-<!-- ═══ ADD/EDIT FESTIVAL MODAL ═══ -->
+<!-- Add/Edit Festival -->
 <div class="modal-overlay hidden" id="festModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2 id="festModalTitle">Add Festival</h2>
-      <button class="modal-close" onclick="closeFestModal()">✕</button>
+    <div class="modal-header"><h2 id="festModalTitle"></h2><button class="modal-close" onclick="closeFestModal()">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-fname"></label><input id="fName"/></div>
+      <div class="form-group"><label id="lbl-fdate"></label><input id="fDate" type="date"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Festival Name *</label><input id="fName" placeholder="e.g. Dussehra"/></div>
-      <div class="form-group"><label>Date *</label><input id="fDate" type="date"/></div>
+      <div class="form-group"><label id="lbl-ftype"></label><select id="fType"></select></div>
+      <div class="form-group"><label id="lbl-floc"></label><input id="fLoc"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Type</label>
-        <select id="fType"><option>RELIGIOUS</option><option>CULTURAL</option><option>SPORTS</option><option>GOVERNMENT</option><option>COMMUNITY</option><option>OTHER</option></select>
-      </div>
-      <div class="form-group"><label>Location</label><input id="fLoc" placeholder="Village Square"/></div>
+      <div class="form-group"><label id="lbl-forg"></label><input id="fOrg"/></div>
+      <div class="form-group"><label id="lbl-fphone"></label><input id="fPhone"/></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Organizer / Committee</label><input id="fOrg" placeholder="Organizer name"/></div>
-      <div class="form-group"><label>Contact Phone</label><input id="fPhone" placeholder="Phone number"/></div>
-    </div>
-    <div class="form-group"><label>Description</label><textarea id="fDesc" placeholder="About this festival..."></textarea></div>
+    <div class="form-group"><label id="lbl-fdesc"></label><textarea id="fDesc"></textarea></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeFestModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveFestival()">Save Festival</button>
+      <button class="btn btn-ghost" id="btnCancel" onclick="closeFestModal()"></button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveFestival()"></button>
     </div>
   </div>
 </div>
 
-<!-- ═══ FESTIVAL DETAIL MODAL (Finance + Events) ═══ -->
+<!-- Finance & Events Detail Modal -->
 <div class="modal-overlay hidden" id="detailModal">
   <div class="modal modal-wide">
-    <div class="modal-header">
-      <h2 id="detailTitle">Festival Details</h2>
-      <button class="modal-close" onclick="document.getElementById('detailModal').classList.add('hidden')">✕</button>
-    </div>
-
-    <!-- Fund Summary -->
+    <div class="modal-header"><h2 id="detailTitle"></h2><button class="modal-close" onclick="document.getElementById('detailModal').classList.add('hidden')">✕</button></div>
     <div class="fund-summary" id="fundSummary"></div>
-
-    <!-- Tabs inside modal -->
-    <div class="tabs" style="margin-bottom:16px">
-      <button class="tab-btn active" onclick="switchDetailTab('collections',this)">💵 Fund Collections</button>
-      <button class="tab-btn" onclick="switchDetailTab('expenses',this)">💸 Expenses</button>
-      <button class="tab-btn" onclick="switchDetailTab('events',this)">🎭 Events</button>
+    <div class="tabs" style="margin-bottom:14px">
+      <button class="tab-btn active" onclick="switchDetailTab('collections',this)" id="dtab-collections-btn"></button>
+      <button class="tab-btn" onclick="switchDetailTab('expenses',this)" id="dtab-expenses-btn"></button>
+      <button class="tab-btn" onclick="switchDetailTab('events',this)" id="dtab-events-btn"></button>
     </div>
-
-    <!-- Collections -->
     <div id="dtab-collections">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-size:13px;color:var(--muted)">Money collected from villagers / donors</div>
-        <button class="btn btn-sm btn-primary" id="addCollectionBtn" onclick="openAddCollection()">＋ Add Collection</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--muted)" id="collections-sub"></div>
+        <button class="btn btn-sm btn-primary" id="addCollBtn" onclick="openAddCollection()"></button>
       </div>
       <div id="collectionsList"></div>
     </div>
-
-    <!-- Expenses -->
     <div id="dtab-expenses" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-size:13px;color:var(--muted)">Money spent on festival items and events</div>
-        <button class="btn btn-sm btn-amber" id="addExpenseBtn" onclick="openAddExpense()">＋ Add Expense</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--muted)" id="expenses-sub"></div>
+        <button class="btn btn-sm btn-amber" id="addExpBtn" onclick="openAddExpense()"></button>
       </div>
       <div id="expensesList"></div>
     </div>
-
-    <!-- Events -->
     <div id="dtab-events" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-size:13px;color:var(--muted)">Events/programs conducted during this festival</div>
-        <button class="btn btn-sm btn-teal" id="addEventBtn" onclick="openAddEvent()">＋ Add Event</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:13px;color:var(--muted)" id="events-sub"></div>
+        <button class="btn btn-sm btn-teal" id="addEvtBtn" onclick="openAddEvent()"></button>
       </div>
       <div id="eventsList"></div>
     </div>
   </div>
 </div>
 
-<!-- ═══ ADD COLLECTION MODAL ═══ -->
+<!-- Add Collection -->
 <div class="modal-overlay hidden" id="collModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2>💵 Add Fund Collection</h2>
-      <button class="modal-close" onclick="document.getElementById('collModal').classList.add('hidden')">✕</button>
+    <div class="modal-header"><h2 id="collTitle"></h2><button class="modal-close" onclick="document.getElementById('collModal').classList.add('hidden')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-donor"></label><input id="cDonor"/></div>
+      <div class="form-group"><label id="lbl-camount"></label><input id="cAmount" type="number"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Donor / Villager Name *</label><input id="cDonor" placeholder="Name of person"/></div>
-      <div class="form-group"><label>Amount (₹) *</label><input id="cAmount" type="number" placeholder="0"/></div>
+      <div class="form-group"><label id="lbl-cdate"></label><input id="cDate" type="date"/></div>
+      <div class="form-group"><label id="lbl-cby"></label><input id="cBy"/></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Collection Date</label><input id="cDate" type="date"/></div>
-      <div class="form-group"><label>Collected By</label><input id="cBy" placeholder="Committee member name"/></div>
-    </div>
-    <div class="form-group"><label>Note</label><input id="cNote" placeholder="Optional note..."/></div>
+    <div class="form-group"><label id="lbl-cnote"></label><input id="cNote"/></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('collModal').classList.add('hidden')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveCollection()">Save</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('collModal').classList.add('hidden')" id="btnCancelC"></button>
+      <button class="btn btn-primary" onclick="saveCollection()" id="btnSaveC"></button>
     </div>
   </div>
 </div>
 
-<!-- ═══ ADD EXPENSE MODAL ═══ -->
+<!-- Add Expense -->
 <div class="modal-overlay hidden" id="expModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2>💸 Add Expense</h2>
-      <button class="modal-close" onclick="document.getElementById('expModal').classList.add('hidden')">✕</button>
+    <div class="modal-header"><h2 id="expTitle"></h2><button class="modal-close" onclick="document.getElementById('expModal').classList.add('hidden')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-eitem"></label><input id="eItem"/></div>
+      <div class="form-group"><label id="lbl-eamount"></label><input id="eAmount" type="number"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Expense Item *</label><input id="eItem" placeholder="e.g. Decorations, Sound system"/></div>
-      <div class="form-group"><label>Amount (₹) *</label><input id="eAmount" type="number" placeholder="0"/></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Category</label>
-        <select id="eCat">
-          <option value="DECORATION">Decoration</option>
-          <option value="FOOD">Food & Prasadam</option>
-          <option value="SOUND">Sound System</option>
-          <option value="LIGHTING">Lighting</option>
-          <option value="PRIZES">Prizes & Gifts</option>
-          <option value="PUJA">Puja Items</option>
-          <option value="TRANSPORT">Transport</option>
-          <option value="OTHER">Other</option>
-        </select>
+      <div class="form-group"><label id="lbl-ecat"></label>
+        <select id="eCat"><option value="DECORATION" id="opt-dec"></option><option value="FOOD" id="opt-food"></option><option value="SOUND" id="opt-sound"></option><option value="LIGHTING" id="opt-light"></option><option value="PRIZES" id="opt-prize"></option><option value="PUJA" id="opt-puja"></option><option value="TRANSPORT" id="opt-trans"></option><option value="OTHER" id="opt-other"></option></select>
       </div>
-      <div class="form-group"><label>Date</label><input id="eDate" type="date"/></div>
+      <div class="form-group"><label id="lbl-edate"></label><input id="eDate" type="date"/></div>
     </div>
-    <div class="form-group"><label>Paid To / Vendor</label><input id="eVendor" placeholder="Shop or person paid"/></div>
-    <div class="form-group"><label>Note</label><input id="eNote" placeholder="Optional note..."/></div>
+    <div class="form-group"><label id="lbl-evendor"></label><input id="eVendor"/></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('expModal').classList.add('hidden')">Cancel</button>
-      <button class="btn btn-amber" onclick="saveExpense()">Save Expense</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('expModal').classList.add('hidden')" id="btnCancelE"></button>
+      <button class="btn btn-amber" onclick="saveExpense()" id="btnSaveE"></button>
     </div>
   </div>
 </div>
 
-<!-- ═══ ADD EVENT MODAL ═══ -->
+<!-- Add Event -->
 <div class="modal-overlay hidden" id="evtModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2>🎭 Add Festival Event</h2>
-      <button class="modal-close" onclick="document.getElementById('evtModal').classList.add('hidden')">✕</button>
+    <div class="modal-header"><h2 id="evtTitle"></h2><button class="modal-close" onclick="document.getElementById('evtModal').classList.add('hidden')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-evname"></label><input id="evName"/></div>
+      <div class="form-group"><label id="lbl-evdt"></label><input id="evDateTime" type="datetime-local"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Event Name *</label><input id="evName" placeholder="e.g. Cultural Dance, Cricket match"/></div>
-      <div class="form-group"><label>Date & Time</label><input id="evDateTime" type="datetime-local"/></div>
+      <div class="form-group"><label id="lbl-evvenue"></label><input id="evVenue"/></div>
+      <div class="form-group"><label id="lbl-evprize"></label><input id="evPrize"/></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Venue</label><input id="evVenue" placeholder="Where in the village?"/></div>
-      <div class="form-group"><label>Prize / Reward</label><input id="evPrize" placeholder="e.g. ₹500 cash prize"/></div>
-    </div>
-    <div class="form-group"><label>Description</label><textarea id="evDesc" placeholder="Details about this event..."></textarea></div>
-    <div class="form-group"><label>Organizer / In-charge</label><input id="evOrg" placeholder="Person responsible"/></div>
+    <div class="form-group"><label id="lbl-evdesc"></label><textarea id="evDesc"></textarea></div>
+    <div class="form-group"><label id="lbl-evorg"></label><input id="evOrg"/></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('evtModal').classList.add('hidden')">Cancel</button>
-      <button class="btn btn-teal" onclick="saveEvent()">Save Event</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('evtModal').classList.add('hidden')" id="btnCancelEv"></button>
+      <button class="btn btn-teal" onclick="saveEvent()" id="btnSaveEv"></button>
     </div>
   </div>
 </div>
 
 <script>
-// ── state ──
-let currentTab   = "upcoming";
-let currentFestId = null;
-let festivalsData = {}; // in-memory store per festival: { id: { collections:[], expenses:[], events:[] } }
+let currentTab="upcoming", currentFestId=null, editFestId=null;
 
-if (isAdmin()) document.getElementById("addBtn").style.display = "flex";
+const festTypes=[
+  ["RELIGIOUS",getLang()==="te"?"మతపరమైన":"Religious","🕌"],
+  ["CULTURAL",getLang()==="te"?"సాంస్కృతిక":"Cultural","🎭"],
+  ["SPORTS",getLang()==="te"?"క్రీడలు":"Sports","⚽"],
+  ["GOVERNMENT",getLang()==="te"?"ప్రభుత్వం":"Government","🏛️"],
+  ["COMMUNITY",getLang()==="te"?"సమాజ":"Community","🤝"],
+  ["OTHER",t("other"),"🎊"]
+];
+const typeBadge={RELIGIOUS:"badge-amber",CULTURAL:"badge-purple",SPORTS:"badge-green",GOVERNMENT:"badge-blue",COMMUNITY:"badge-teal",OTHER:"badge-gray"};
 
-const typeEmoji = {RELIGIOUS:"🕌",CULTURAL:"🎭",SPORTS:"⚽",GOVERNMENT:"🏛️",COMMUNITY:"🤝",OTHER:"🎊"};
-const typeBadgeClass = {RELIGIOUS:"badge-amber",CULTURAL:"badge-purple",SPORTS:"badge-green",GOVERNMENT:"badge-blue",COMMUNITY:"badge-teal",OTHER:"badge-gray"};
+function applyLang(){
+  document.getElementById("pageTitle").textContent        = t("festivals");
+  document.getElementById("addBtn").textContent           = "＋ " + t("add_festival");
+  document.getElementById("tabUpcoming").textContent      = "🔔 " + t("upcoming");
+  document.getElementById("tabAll").textContent           = getLang()==="te"?"అన్ని పండుగలు":"All Festivals";
+  document.getElementById("lbl-fname").textContent        = t("festival_name");
+  document.getElementById("lbl-fdate").textContent        = t("date");
+  document.getElementById("lbl-ftype").textContent        = t("type");
+  document.getElementById("lbl-floc").textContent         = t("location");
+  document.getElementById("lbl-forg").textContent         = t("committee");
+  document.getElementById("lbl-fphone").textContent       = t("phone");
+  document.getElementById("lbl-fdesc").textContent        = t("description");
+  document.getElementById("btnCancel").textContent        = t("cancel");
+  document.getElementById("btnSave").textContent          = t("save");
+  document.getElementById("dtab-collections-btn").textContent = "💵 " + t("fund_collections");
+  document.getElementById("dtab-expenses-btn").textContent    = "💸 " + t("expenses");
+  document.getElementById("dtab-events-btn").textContent      = "🎭 " + t("events");
+  document.getElementById("collections-sub").textContent = getLang()==="te"?"గ్రామస్తుల నుండి సేకరించిన నిధులు":"Money collected from villagers";
+  document.getElementById("expenses-sub").textContent    = getLang()==="te"?"పండుగ కోసం ఖర్చు":"Money spent for festival";
+  document.getElementById("events-sub").textContent      = getLang()==="te"?"పండుగలో నిర్వహించిన కార్యక్రమాలు":"Events during festival";
+  document.getElementById("addCollBtn").textContent      = "＋ " + t("add_collection");
+  document.getElementById("addExpBtn").textContent       = "＋ " + t("add_expense");
+  document.getElementById("addEvtBtn").textContent       = "＋ " + t("add_event");
+  document.getElementById("collTitle").textContent       = "💵 " + t("add_collection");
+  document.getElementById("lbl-donor").textContent       = t("donor");
+  document.getElementById("lbl-camount").textContent     = t("amount") + " (₹)";
+  document.getElementById("lbl-cdate").textContent       = t("date");
+  document.getElementById("lbl-cby").textContent         = t("collected_by");
+  document.getElementById("lbl-cnote").textContent       = getLang()==="te"?"గమనిక":"Note";
+  document.getElementById("btnCancelC").textContent      = t("cancel");
+  document.getElementById("btnSaveC").textContent        = t("save");
+  document.getElementById("expTitle").textContent        = "💸 " + t("add_expense");
+  document.getElementById("lbl-eitem").textContent       = t("expense_item");
+  document.getElementById("lbl-eamount").textContent     = t("amount") + " (₹)";
+  document.getElementById("lbl-ecat").textContent        = t("category");
+  document.getElementById("lbl-edate").textContent       = t("date");
+  document.getElementById("lbl-evendor").textContent     = t("paid_to");
+  document.getElementById("btnCancelE").textContent      = t("cancel");
+  document.getElementById("btnSaveE").textContent        = t("save");
+  document.getElementById("evtTitle").textContent        = "🎭 " + t("add_event");
+  document.getElementById("lbl-evname").textContent      = t("event_name");
+  document.getElementById("lbl-evdt").textContent        = getLang()==="te"?"తేదీ & సమయం":"Date & Time";
+  document.getElementById("lbl-evvenue").textContent     = t("venue");
+  document.getElementById("lbl-evprize").textContent     = t("prize");
+  document.getElementById("lbl-evdesc").textContent      = t("description");
+  document.getElementById("lbl-evorg").textContent       = t("incharge");
+  document.getElementById("btnCancelEv").textContent     = t("cancel");
+  document.getElementById("btnSaveEv").textContent       = t("save");
 
-// ── Load festivals ──
-function switchTab(t, btn) {
-  currentTab = t;
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  loadFestivals();
+  // Expense categories
+  const expCats={DECORATION:getLang()==="te"?"అలంకరణ":"Decoration",FOOD:getLang()==="te"?"ఆహారం & ప్రసాదం":"Food & Prasadam",SOUND:getLang()==="te"?"సౌండ్ సిస్టమ్":"Sound System",LIGHTING:getLang()==="te"?"లైటింగ్":"Lighting",PRIZES:getLang()==="te"?"బహుమతులు":"Prizes & Gifts",PUJA:getLang()==="te"?"పూజ సామగ్రి":"Puja Items",TRANSPORT:getLang()==="te"?"రవాణా":"Transport",OTHER:t("other")};
+  Object.entries(expCats).forEach(([k,v])=>{const el=document.getElementById(`opt-${k.toLowerCase().replace("_","")}`);if(el)el.textContent=v;});
+
+  document.getElementById("fType").innerHTML=festTypes.map(([v,l,ic])=>`<option value="${v}">${ic} ${l}</option>`).join("");
 }
+applyLang();
+if(isAdmin()){document.getElementById("addBtn").style.display="flex";["addCollBtn","addExpBtn","addEvtBtn"].forEach(id=>document.getElementById(id).style.display="flex");}
+else{["addCollBtn","addExpBtn","addEvtBtn"].forEach(id=>document.getElementById(id).style.display="none");}
 
-async function loadFestivals() {
-  const el = document.getElementById("festivalList");
-  el.innerHTML = '<div style="color:var(--muted);padding:20px">Loading...</div>';
-  try {
-    const path = currentTab==="upcoming" ? "/api/festivals/upcoming" : "/api/festivals";
-    const data = await api("GET", path);
-    if (!data.length) { el.innerHTML='<div class="empty"><div class="ei">🎉</div><p>No festivals found</p></div>'; return; }
-    el.innerHTML = '<div class="card-grid">' + data.map(f => `
-      <div class="card" style="display:flex;flex-direction:column;gap:10px">
+function switchTab(tab,btn){currentTab=tab;document.querySelectorAll(".tabs .tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");loadFestivals();}
+function switchDetailTab(tab,btn){document.querySelectorAll("#detailModal .tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");["collections","expenses","events"].forEach(t=>document.getElementById(`dtab-${t}`).style.display=t===tab?"block":"none");}
+
+async function loadFestivals(){
+  const el=document.getElementById("festivalList");
+  el.innerHTML=`<div style="color:var(--muted);padding:20px">${t("loading")}</div>`;
+  try{
+    const path=currentTab==="upcoming"?"/api/festivals/upcoming":"/api/festivals";
+    const data=await api("GET",path);
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="ei">🎉</div><p>${t("no_festivals")}</p></div>`;return;}
+    el.innerHTML='<div class="card-grid">'+data.map(f=>{
+      const ft=festTypes.find(x=>x[0]===f.type)||["","","🎊"];
+      return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div style="font-size:18px;font-weight:700">${typeEmoji[f.type]||"🎊"} ${f.name}</div>
-          <span class="badge ${typeBadgeClass[f.type]||'badge-gray'}">${f.type}</span>
+          <div style="font-weight:700;font-size:15px">${ft[2]} ${f.name}</div>
+          <span class="badge ${typeBadge[f.type]||"badge-gray"}">${ft[1]||f.type}</span>
         </div>
         <div style="font-size:13px;color:var(--muted)">📅 ${formatDate(f.festivalDate)}</div>
         ${f.location?`<div style="font-size:13px;color:var(--muted)">📍 ${f.location}</div>`:""}
-        ${f.organizer?`<div style="font-size:13px;color:var(--muted)">👤 ${f.organizer} ${f.contactPhone?'· 📞 '+f.contactPhone:''}</div>`:""}
+        ${f.organizer?`<div style="font-size:13px;color:var(--muted)">👤 ${f.organizer}${f.contactPhone?" · 📞 "+f.contactPhone:""}</div>`:""}
         ${f.description?`<div style="font-size:13px;color:#444;line-height:1.5">${f.description}</div>`:""}
-        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
-          <button class="btn btn-sm btn-primary" onclick="openDetail(${f.id},'${f.name.replace(/'/g,"\\'")}')">📊 Finance & Events</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn btn-sm btn-primary" onclick="openDetail(${f.id},'${f.name.replace(/'/g,"\\'")}')">📊 ${t("finance_events")}</button>
           ${isAdmin()?`
-            <button class="btn btn-sm btn-ghost" onclick="openEditFestival(${JSON.stringify(f).replace(/"/g,'&quot;')})">Edit</button>
-            <button class="btn btn-sm btn-red" onclick="deleteFestival(${f.id})">Delete</button>
-          `:""}
+            <button class="btn btn-sm btn-ghost" onclick='openEditFestival(${JSON.stringify(f).replace(/"/g,"&quot;")})'>${t("edit")}</button>
+            <button class="btn btn-sm btn-red" onclick="deleteFestival(${f.id})">${t("delete")}</button>`:""}
         </div>
-      </div>`).join("") + "</div>";
-  } catch(e) { el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`; }
+      </div>`;
+    }).join('')+'</div>';
+  }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
 }
 
-// ── FESTIVAL CRUD ──
-let editFestId = null;
-function openAddFestival() {
-  editFestId = null;
-  document.getElementById("festModalTitle").textContent = "Add Festival";
-  ["fName","fLoc","fOrg","fPhone","fDesc"].forEach(id => document.getElementById(id).value="");
-  document.getElementById("fDate").value="";
-  document.getElementById("festModal").classList.remove("hidden");
+function openAddFestival(){editFestId=null;document.getElementById("festModalTitle").textContent="＋ "+t("add_festival");["fName","fLoc","fOrg","fPhone","fDesc"].forEach(id=>document.getElementById(id).value="");document.getElementById("fDate").value="";document.getElementById("festModal").classList.remove("hidden");}
+function openEditFestival(f){editFestId=f.id;document.getElementById("festModalTitle").textContent=t("edit");document.getElementById("fName").value=f.name||"";document.getElementById("fDate").value=f.festivalDate||"";document.getElementById("fType").value=f.type||"RELIGIOUS";document.getElementById("fLoc").value=f.location||"";document.getElementById("fOrg").value=f.organizer||"";document.getElementById("fPhone").value=f.contactPhone||"";document.getElementById("fDesc").value=f.description||"";document.getElementById("festModal").classList.remove("hidden");}
+function closeFestModal(){document.getElementById("festModal").classList.add("hidden");}
+async function saveFestival(){
+  const body={name:document.getElementById("fName").value,festivalDate:document.getElementById("fDate").value,type:document.getElementById("fType").value,location:document.getElementById("fLoc").value,organizer:document.getElementById("fOrg").value,contactPhone:document.getElementById("fPhone").value,description:document.getElementById("fDesc").value};
+  if(!body.name||!body.festivalDate){toast(getLang()==="te"?"పేరు మరియు తేదీ అవసరం":"Name and date required","error");return;}
+  try{if(editFestId)await api("PUT",`/api/festivals/${editFestId}`,body);else await api("POST","/api/festivals",body);toast(t("save"));closeFestModal();loadFestivals();}catch(e){toast(e.message,"error");}
 }
-function openEditFestival(f) {
-  editFestId = f.id;
-  document.getElementById("festModalTitle").textContent = "Edit Festival";
-  document.getElementById("fName").value  = f.name||"";
-  document.getElementById("fDate").value  = f.festivalDate||"";
-  document.getElementById("fType").value  = f.type||"RELIGIOUS";
-  document.getElementById("fLoc").value   = f.location||"";
-  document.getElementById("fOrg").value   = f.organizer||"";
-  document.getElementById("fPhone").value = f.contactPhone||"";
-  document.getElementById("fDesc").value  = f.description||"";
-  document.getElementById("festModal").classList.remove("hidden");
-}
-function closeFestModal() { document.getElementById("festModal").classList.add("hidden"); }
-async function saveFestival() {
-  const body = {
-    name:        document.getElementById("fName").value,
-    festivalDate:document.getElementById("fDate").value,
-    type:        document.getElementById("fType").value,
-    location:    document.getElementById("fLoc").value,
-    organizer:   document.getElementById("fOrg").value,
-    contactPhone:document.getElementById("fPhone").value,
-    description: document.getElementById("fDesc").value
-  };
-  if (!body.name||!body.festivalDate) { toast("Name and date required","error"); return; }
-  try {
-    if (editFestId) await api("PUT",`/api/festivals/${editFestId}`,body);
-    else            await api("POST","/api/festivals",body);
-    toast("Festival saved!"); closeFestModal(); loadFestivals();
-  } catch(e) { toast(e.message,"error"); }
-}
-async function deleteFestival(id) {
-  if (!confirm("Delete this festival?")) return;
-  try { await api("DELETE",`/api/festivals/${id}`); toast("Deleted"); loadFestivals(); }
-  catch(e) { toast(e.message,"error"); }
-}
+async function deleteFestival(id){if(!confirm(getLang()==="te"?"తొలగించాలా?":"Delete?"))return;try{await api("DELETE",`/api/festivals/${id}`);toast(t("delete"));loadFestivals();}catch(e){toast(e.message,"error");}}
 
-// ══════════════════════════════════════════════
-//  FESTIVAL DETAIL — Finance & Events
-//  All stored in-memory per session (localStorage for persistence)
-// ══════════════════════════════════════════════
-function getStore(festId) {
-  const key = `fest_data_${festId}`;
-  const raw = localStorage.getItem(key);
-  if (raw) return JSON.parse(raw);
-  return { collections:[], expenses:[], events:[] };
-}
-function saveStore(festId, data) {
-  localStorage.setItem(`fest_data_${festId}`, JSON.stringify(data));
-}
+// ── Finance & Events (localStorage) ──
+function getStore(id){const raw=localStorage.getItem(`fest_${id}`);return raw?JSON.parse(raw):{collections:[],expenses:[],events:[]};}
+function saveStore(id,data){localStorage.setItem(`fest_${id}`,JSON.stringify(data));}
 
-function openDetail(festId, festName) {
-  currentFestId = festId;
-  document.getElementById("detailTitle").textContent = `🎉 ${festName}`;
+function openDetail(festId,festName){
+  currentFestId=festId;
+  document.getElementById("detailTitle").textContent=`🎉 ${festName}`;
   document.getElementById("detailModal").classList.remove("hidden");
-  // Reset tabs
-  document.querySelectorAll("#detailModal .tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll("#detailModal .tab-btn")[0].classList.add("active");
-  ["collections","expenses","events"].forEach(t => {
-    document.getElementById(`dtab-${t}`).style.display = t==="collections"?"block":"none";
-  });
-  // Show/hide add buttons based on admin
-  ["addCollectionBtn","addExpenseBtn","addEventBtn"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = isAdmin() ? "flex" : "none";
-  });
+  document.querySelectorAll("#detailModal .tab-btn").forEach((b,i)=>b.classList.toggle("active",i===0));
+  ["collections","expenses","events"].forEach((t,i)=>document.getElementById(`dtab-${t}`).style.display=i===0?"block":"none");
   renderAllDetail();
 }
 
-function switchDetailTab(tab, btn) {
-  document.querySelectorAll("#detailModal .tab-btn").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  ["collections","expenses","events"].forEach(t => {
-    document.getElementById(`dtab-${t}`).style.display = t===tab ? "block" : "none";
-  });
+function renderAllDetail(){renderFundSummary();renderCollections();renderExpenses();renderEvents();}
+
+function renderFundSummary(){
+  const d=getStore(currentFestId);
+  const totalC=d.collections.reduce((s,c)=>s+Number(c.amount||0),0);
+  const totalE=d.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const bal=totalC-totalE;
+  document.getElementById("fundSummary").innerHTML=`
+    <div class="fund-box" style="background:#e8f5e9"><div class="fval" style="color:#1b5e20">${rupee(totalC)}</div><div class="flbl" style="color:#2e7d32">💵 ${t("total_collected")}</div></div>
+    <div class="fund-box" style="background:#fff3e0"><div class="fval" style="color:#bf360c">${rupee(totalE)}</div><div class="flbl" style="color:#e65100">💸 ${t("total_expense")}</div></div>
+    <div class="fund-box" style="background:${bal>=0?"#e3f2fd":"#ffebee"}"><div class="fval" style="color:${bal>=0?"#0d47a1":"#b71c1c"}">${rupee(Math.abs(bal))}</div><div class="flbl" style="color:${bal>=0?"#1565c0":"#c62828"}">${bal>=0?"💰 "+t("balance"):"⚠️ "+t("over_budget")}</div></div>`;
 }
 
-function renderAllDetail() {
-  renderFundSummary();
-  renderCollections();
-  renderExpenses();
-  renderEvents();
+function renderCollections(){
+  const d=getStore(currentFestId);const el=document.getElementById("collectionsList");
+  if(!d.collections.length){el.innerHTML=`<div class="empty" style="padding:20px"><div class="ei">💵</div><p>${getLang()==="te"?"సేకరణలు నమోదు చేయబడలేదు":"No collections recorded"}</p></div>`;return;}
+  el.innerHTML=d.collections.map((c,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--bg);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
+      <div><div style="font-weight:600;font-size:13px">👤 ${c.donor}</div>
+      <div style="font-size:12px;color:var(--muted)">${c.date?"📅 "+c.date:""} ${c.collectedBy?"· "+c.collectedBy:""} ${c.note?"· "+c.note:""}</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="font-size:17px;font-weight:700;color:#1b5e20">${rupee(c.amount)}</div>
+      ${isAdmin()?`<button class="btn btn-xs btn-red" onclick="deleteCollection(${i})">✕</button>`:""}</div>
+    </div>`).join('');
 }
 
-function renderFundSummary() {
-  const data = getStore(currentFestId);
-  const totalCollected = data.collections.reduce((s,c) => s + Number(c.amount||0), 0);
-  const totalSpent     = data.expenses.reduce((s,e)    => s + Number(e.amount||0), 0);
-  const remaining      = totalCollected - totalSpent;
-  document.getElementById("fundSummary").innerHTML = `
-    <div class="fund-box" style="background:#e8f5e9">
-      <div class="fval" style="color:#1b5e20">${rupee(totalCollected)}</div>
-      <div class="flbl" style="color:#2e7d32">💵 Total Collected</div>
-    </div>
-    <div class="fund-box" style="background:#fff3e0">
-      <div class="fval" style="color:#bf360c">${rupee(totalSpent)}</div>
-      <div class="flbl" style="color:#e65100">💸 Total Spent</div>
-    </div>
-    <div class="fund-box" style="background:${remaining>=0?'#e3f2fd':'#ffebee'}">
-      <div class="fval" style="color:${remaining>=0?'#0d47a1':'#b71c1c'}">${rupee(Math.abs(remaining))}</div>
-      <div class="flbl" style="color:${remaining>=0?'#1565c0':'#c62828'}">${remaining>=0?'💰 Balance Remaining':'⚠️ Over Budget'}</div>
-    </div>`;
+function renderExpenses(){
+  const d=getStore(currentFestId);const el=document.getElementById("expensesList");
+  if(!d.expenses.length){el.innerHTML=`<div class="empty" style="padding:20px"><div class="ei">💸</div><p>${getLang()==="te"?"ఖర్చులు నమోదు చేయబడలేదు":"No expenses recorded"}</p></div>`;return;}
+  el.innerHTML=d.expenses.map((e,i)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:#fff8f0;border-radius:9px;border-left:3px solid var(--amber);margin-bottom:8px">
+      <div><div style="font-weight:600;font-size:13px">${e.item}</div>
+      <div style="font-size:12px;color:var(--muted)">${e.category} ${e.vendor?"· "+e.vendor:""} ${e.date?"· "+e.date:""}</div></div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="font-size:17px;font-weight:700;color:#bf360c">${rupee(e.amount)}</div>
+      ${isAdmin()?`<button class="btn btn-xs btn-red" onclick="deleteExpense(${i})">✕</button>`:""}</div>
+    </div>`).join('');
 }
 
-function renderCollections() {
-  const data = getStore(currentFestId);
-  const el = document.getElementById("collectionsList");
-  if (!data.collections.length) {
-    el.innerHTML = '<div class="empty" style="padding:24px"><div class="ei">💵</div><p>No collections recorded yet</p></div>';
-    return;
-  }
-  el.innerHTML = data.collections.map((c,i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#f5faf5;border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
-      <div>
-        <div style="font-weight:600;font-size:14px">👤 ${c.donor}</div>
-        <div style="font-size:12px;color:var(--muted)">${c.date?'📅 '+c.date:''} ${c.collectedBy?'· Collected by: '+c.collectedBy:''} ${c.note?'· '+c.note:''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:18px;font-weight:700;color:#1b5e20">${rupee(c.amount)}</div>
-        ${isAdmin()?`<button class="btn btn-xs btn-red" onclick="deleteCollection(${i})">✕</button>`:""}
-      </div>
-    </div>`).join("");
+function renderEvents(){
+  const d=getStore(currentFestId);const el=document.getElementById("eventsList");
+  if(!d.events.length){el.innerHTML=`<div class="empty" style="padding:20px"><div class="ei">🎭</div><p>${getLang()==="te"?"కార్యక్రమాలు నమోదు చేయబడలేదు":"No events added"}</p></div>`;return;}
+  el.innerHTML=d.events.map((e,i)=>`
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:11px 13px;background:var(--bg);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
+      <div style="flex:1"><div style="font-weight:600;font-size:13px">🎭 ${e.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px">${e.dateTime?"📅 "+e.dateTime:""} ${e.venue?"· 📍 "+e.venue:""} ${e.organizer?"· 👤 "+e.organizer:""}</div>
+      ${e.prize?`<div style="font-size:12px;color:#1b5e20;margin-top:2px">🏆 ${t("prize")}: ${e.prize}</div>`:""}
+      ${e.description?`<div style="font-size:12px;color:#555;margin-top:3px">${e.description}</div>`:""}</div>
+      ${isAdmin()?`<button class="btn btn-xs btn-red" onclick="deleteEvent(${i})">✕</button>`:""}</div>`).join('');
 }
 
-function renderExpenses() {
-  const data = getStore(currentFestId);
-  const el = document.getElementById("expensesList");
-  if (!data.expenses.length) {
-    el.innerHTML = '<div class="empty" style="padding:24px"><div class="ei">💸</div><p>No expenses recorded yet</p></div>';
-    return;
-  }
-  el.innerHTML = data.expenses.map((e,i) => `
-    <div class="expense-item">
-      <div>
-        <div style="font-weight:600;font-size:14px">${e.item}</div>
-        <div style="font-size:12px;color:var(--muted)">${e.category} ${e.vendor?'· Paid to: '+e.vendor:''} ${e.date?'· '+e.date:''} ${e.note?'· '+e.note:''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:17px;font-weight:700;color:#bf360c">${rupee(e.amount)}</div>
-        ${isAdmin()?`<button class="btn btn-xs btn-red" onclick="deleteExpense(${i})">✕</button>`:""}
-      </div>
-    </div>`).join("");
+function openAddCollection(){["cDonor","cBy","cNote"].forEach(id=>document.getElementById(id).value="");document.getElementById("cAmount").value="";document.getElementById("cDate").value="";document.getElementById("collModal").classList.remove("hidden");}
+function saveCollection(){
+  const donor=document.getElementById("cDonor").value.trim();const amount=document.getElementById("cAmount").value;
+  if(!donor||!amount){toast(getLang()==="te"?"పేరు మరియు మొత్తం అవసరం":"Name and amount required","error");return;}
+  const d=getStore(currentFestId);d.collections.push({donor,amount:parseFloat(amount),date:document.getElementById("cDate").value,collectedBy:document.getElementById("cBy").value,note:document.getElementById("cNote").value});
+  saveStore(currentFestId,d);toast(t("save"));document.getElementById("collModal").classList.add("hidden");renderAllDetail();
 }
+function deleteCollection(i){const d=getStore(currentFestId);d.collections.splice(i,1);saveStore(currentFestId,d);renderAllDetail();}
 
-function renderEvents() {
-  const data = getStore(currentFestId);
-  const el = document.getElementById("eventsList");
-  if (!data.events.length) {
-    el.innerHTML = '<div class="empty" style="padding:24px"><div class="ei">🎭</div><p>No events added yet</p></div>';
-    return;
-  }
-  el.innerHTML = data.events.map((e,i) => `
-    <div class="event-item">
-      <div style="flex:1">
-        <div style="font-weight:600;font-size:14px">🎭 ${e.name}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px">
-          ${e.dateTime?'📅 '+e.dateTime:''}
-          ${e.venue?'&nbsp;·&nbsp; 📍 '+e.venue:''}
-          ${e.organizer?'&nbsp;·&nbsp; 👤 '+e.organizer:''}
-        </div>
-        ${e.prize?`<div style="font-size:12px;color:#1b5e20;margin-top:2px">🏆 Prize: ${e.prize}</div>`:''}
-        ${e.description?`<div style="font-size:12px;color:#555;margin-top:4px">${e.description}</div>`:''}
-      </div>
-      ${isAdmin()?`<button class="btn btn-xs btn-red" style="flex-shrink:0" onclick="deleteEvent(${i})">✕</button>`:""}
-    </div>`).join("");
+function openAddExpense(){["eItem","eVendor"].forEach(id=>document.getElementById(id).value="");document.getElementById("eAmount").value="";document.getElementById("eDate").value="";document.getElementById("expModal").classList.remove("hidden");}
+function saveExpense(){
+  const item=document.getElementById("eItem").value.trim();const amount=document.getElementById("eAmount").value;
+  if(!item||!amount){toast(getLang()==="te"?"వివరాలు మరియు మొత్తం అవసరం":"Item and amount required","error");return;}
+  const d=getStore(currentFestId);d.expenses.push({item,amount:parseFloat(amount),category:document.getElementById("eCat").value,date:document.getElementById("eDate").value,vendor:document.getElementById("eVendor").value});
+  saveStore(currentFestId,d);toast(t("save"));document.getElementById("expModal").classList.add("hidden");renderAllDetail();
 }
+function deleteExpense(i){const d=getStore(currentFestId);d.expenses.splice(i,1);saveStore(currentFestId,d);renderAllDetail();}
 
-// ── COLLECTIONS CRUD ──
-function openAddCollection() { ["cDonor","cBy","cNote"].forEach(id=>document.getElementById(id).value=""); document.getElementById("cAmount").value=""; document.getElementById("cDate").value=""; document.getElementById("collModal").classList.remove("hidden"); }
-function saveCollection() {
-  const donor = document.getElementById("cDonor").value.trim();
-  const amount = document.getElementById("cAmount").value;
-  if (!donor||!amount) { toast("Name and amount required","error"); return; }
-  const data = getStore(currentFestId);
-  data.collections.push({ donor, amount:parseFloat(amount), date:document.getElementById("cDate").value, collectedBy:document.getElementById("cBy").value, note:document.getElementById("cNote").value });
-  saveStore(currentFestId, data);
-  toast("Collection added!");
-  document.getElementById("collModal").classList.add("hidden");
-  renderAllDetail();
+function openAddEvent(){["evName","evVenue","evPrize","evDesc","evOrg"].forEach(id=>document.getElementById(id).value="");document.getElementById("evDateTime").value="";document.getElementById("evtModal").classList.remove("hidden");}
+function saveEvent(){
+  const name=document.getElementById("evName").value.trim();
+  if(!name){toast(getLang()==="te"?"కార్యక్రమం పేరు అవసరం":"Event name required","error");return;}
+  const d=getStore(currentFestId);d.events.push({name,dateTime:document.getElementById("evDateTime").value,venue:document.getElementById("evVenue").value,prize:document.getElementById("evPrize").value,description:document.getElementById("evDesc").value,organizer:document.getElementById("evOrg").value});
+  saveStore(currentFestId,d);toast(t("save"));document.getElementById("evtModal").classList.add("hidden");renderAllDetail();
 }
-function deleteCollection(i) {
-  const data = getStore(currentFestId);
-  data.collections.splice(i,1);
-  saveStore(currentFestId, data);
-  renderAllDetail();
-}
-
-// ── EXPENSES CRUD ──
-function openAddExpense() { ["eItem","eVendor","eNote"].forEach(id=>document.getElementById(id).value=""); document.getElementById("eAmount").value=""; document.getElementById("eDate").value=""; document.getElementById("expModal").classList.remove("hidden"); }
-function saveExpense() {
-  const item = document.getElementById("eItem").value.trim();
-  const amount = document.getElementById("eAmount").value;
-  if (!item||!amount) { toast("Item and amount required","error"); return; }
-  const data = getStore(currentFestId);
-  data.expenses.push({ item, amount:parseFloat(amount), category:document.getElementById("eCat").value, date:document.getElementById("eDate").value, vendor:document.getElementById("eVendor").value, note:document.getElementById("eNote").value });
-  saveStore(currentFestId, data);
-  toast("Expense recorded!");
-  document.getElementById("expModal").classList.add("hidden");
-  renderAllDetail();
-}
-function deleteExpense(i) {
-  const data = getStore(currentFestId);
-  data.expenses.splice(i,1);
-  saveStore(currentFestId, data);
-  renderAllDetail();
-}
-
-// ── EVENTS CRUD ──
-function openAddEvent() { ["evName","evVenue","evPrize","evDesc","evOrg"].forEach(id=>document.getElementById(id).value=""); document.getElementById("evDateTime").value=""; document.getElementById("evtModal").classList.remove("hidden"); }
-function saveEvent() {
-  const name = document.getElementById("evName").value.trim();
-  if (!name) { toast("Event name required","error"); return; }
-  const data = getStore(currentFestId);
-  data.events.push({ name, dateTime:document.getElementById("evDateTime").value, venue:document.getElementById("evVenue").value, prize:document.getElementById("evPrize").value, description:document.getElementById("evDesc").value, organizer:document.getElementById("evOrg").value });
-  saveStore(currentFestId, data);
-  toast("Event added!");
-  document.getElementById("evtModal").classList.add("hidden");
-  renderAllDetail();
-}
-function deleteEvent(i) {
-  const data = getStore(currentFestId);
-  data.events.splice(i,1);
-  saveStore(currentFestId, data);
-  renderAllDetail();
-}
+function deleteEvent(i){const d=getStore(currentFestId);d.events.splice(i,1);saveStore(currentFestId,d);renderAllDetail();}
 
 loadFestivals();
 </script>
-</body>
-</html>
+</body></html>

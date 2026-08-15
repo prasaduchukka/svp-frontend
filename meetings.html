@@ -1,107 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Meetings — Smart Village Portal</title>
 <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<script src="config.js"></script><script src="navbar.js"></script><script>renderNav("meetings")</script>
+</head><body>
+<script src="config.js"></script><script src="lang.js"></script><script src="navbar.js"></script>
+<script>renderNav("meetings")</script>
 <div class="page">
   <div class="page-header">
-    <h1><span class="ph-icon">📅</span> Village Meetings</h1>
-    <button class="btn btn-primary" onclick="openModal()" id="addBtn" style="display:none">＋ Add Meeting</button>
+    <h1><span>📅</span> <span id="pageTitle"></span></h1>
+    <button class="btn btn-primary" onclick="openModal()" id="addBtn" style="display:none" id="addBtn"></button>
   </div>
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('upcoming',this)">🔔 Upcoming</button>
-    <button class="tab-btn" onclick="switchTab('all',this)">All Meetings</button>
+    <button class="tab-btn active" onclick="switchTab('upcoming',this)" id="tabUpcoming"></button>
+    <button class="tab-btn" onclick="switchTab('all',this)" id="tabAll"></button>
   </div>
   <div id="listWrap"></div>
 </div>
 
 <div class="modal-overlay hidden" id="modal">
   <div class="modal">
-    <div class="modal-header">
-      <h2 id="modalTitle">Add Meeting</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header"><h2 id="modalTitle"></h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-title"></label><input id="fTitle"/></div>
+      <div class="form-group"><label id="lbl-date"></label><input id="fDate" type="datetime-local"/></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Title *</label><input id="fTitle" placeholder="Meeting title"/></div>
-      <div class="form-group"><label>Date & Time *</label><input id="fDate" type="datetime-local"/></div>
+      <div class="form-group"><label id="lbl-loc"></label><input id="fLocation"/></div>
+      <div class="form-group"><label id="lbl-org"></label><input id="fOrganizer"/></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Location</label><input id="fLocation" placeholder="Village Hall"/></div>
-      <div class="form-group"><label>Organizer</label><input id="fOrganizer" placeholder="Sarpanch"/></div>
-    </div>
-    <div class="form-group"><label>Agenda</label><textarea id="fAgenda" placeholder="Topics to be discussed..."></textarea></div>
-    <div class="form-group"><label>Description</label><textarea id="fDesc" placeholder="Additional details..."></textarea></div>
+    <div class="form-group"><label id="lbl-agenda"></label><textarea id="fAgenda"></textarea></div>
+    <div class="form-group"><label id="lbl-desc"></label><textarea id="fDesc"></textarea></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveMeeting()">Save Meeting</button>
+      <button class="btn btn-ghost" onclick="closeModal()" id="btnCancel"></button>
+      <button class="btn btn-primary" onclick="saveMeeting()" id="btnSave"></button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay hidden" id="minutesModal">
   <div class="modal">
-    <div class="modal-header">
-      <h2>📝 Add Meeting Minutes</h2>
-      <button class="modal-close" onclick="document.getElementById('minutesModal').classList.add('hidden')">✕</button>
-    </div>
-    <div class="form-group"><label>Minutes / Notes</label><textarea id="fMinutes" rows="6" placeholder="What was discussed and decided..."></textarea></div>
+    <div class="modal-header"><h2 id="minutesTitle"></h2><button class="modal-close" onclick="document.getElementById('minutesModal').classList.add('hidden')">✕</button></div>
+    <div class="form-group"><label id="lbl-minutes"></label><textarea id="fMinutes" rows="5"></textarea></div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="document.getElementById('minutesModal').classList.add('hidden')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveMinutes()">Save Minutes</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('minutesModal').classList.add('hidden')" id="btnCancelMin"></button>
+      <button class="btn btn-primary" onclick="saveMinutes()" id="btnSaveMin"></button>
     </div>
   </div>
 </div>
 
 <script>
 let currentTab="upcoming", editId=null, minutesId=null;
+
+function applyLang(){
+  document.getElementById("pageTitle").textContent  = t("meetings");
+  document.getElementById("addBtn").textContent     = t("add_meeting");
+  document.getElementById("tabUpcoming").textContent= "🔔 " + t("upcoming");
+  document.getElementById("tabAll").textContent     = getLang()==="te" ? "అన్ని సమావేశాలు" : "All Meetings";
+  document.getElementById("modalTitle").textContent = editId ? t("edit") : getLang()==="te" ? "సమావేశం జోడించు" : "Add Meeting";
+  document.getElementById("lbl-title").textContent  = t("meeting_title");
+  document.getElementById("lbl-date").textContent   = t("meeting_date");
+  document.getElementById("lbl-loc").textContent    = t("location");
+  document.getElementById("lbl-org").textContent    = t("organizer");
+  document.getElementById("lbl-agenda").textContent = t("agenda");
+  document.getElementById("lbl-desc").textContent   = t("description");
+  document.getElementById("btnCancel").textContent  = t("cancel");
+  document.getElementById("btnSave").textContent    = t("save");
+  document.getElementById("minutesTitle").textContent = "📝 " + t("add_minutes");
+  document.getElementById("lbl-minutes").textContent  = t("meeting_minutes");
+  document.getElementById("btnCancelMin").textContent = t("cancel");
+  document.getElementById("btnSaveMin").textContent   = t("save");
+}
+applyLang();
 if(isAdmin()) document.getElementById("addBtn").style.display="flex";
+
+const statusBadge={UPCOMING:"badge-blue",ONGOING:"badge-amber",COMPLETED:"badge-green",CANCELLED:"badge-red"};
+const statusLabel={UPCOMING:getLang()==="te"?"రానున్నది":"Upcoming", ONGOING:getLang()==="te"?"జరుగుతున్నది":"Ongoing", COMPLETED:getLang()==="te"?"పూర్తయింది":"Completed", CANCELLED:getLang()==="te"?"రద్దయింది":"Cancelled"};
 
 function switchTab(t,btn){currentTab=t;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");load();}
 
-const statusBadge={UPCOMING:"badge-blue",ONGOING:"badge-amber",COMPLETED:"badge-green",CANCELLED:"badge-red"};
-
 async function load(){
   const el=document.getElementById("listWrap");
-  el.innerHTML='<div style="color:var(--muted);padding:20px">Loading...</div>';
+  el.innerHTML=`<div style="color:var(--muted);padding:20px">${t("loading")}</div>`;
   try{
     const data=await api("GET",currentTab==="upcoming"?"/api/meetings/upcoming":"/api/meetings");
-    if(!data.length){el.innerHTML='<div class="empty"><div class="ei">📅</div><p>No meetings found</p></div>';return;}
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="ei">📅</div><p>${t("no_meetings")}</p></div>`;return;}
     el.innerHTML='<div class="card-grid">'+data.map(m=>`
       <div class="card" style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="font-weight:700;font-size:15px">${m.title}</div>
-          <span class="badge ${statusBadge[m.status]||'badge-gray'}">${m.status}</span>
+          <span class="badge ${statusBadge[m.status]||'badge-gray'}">${statusLabel[m.status]||m.status}</span>
         </div>
         <div style="font-size:13px;color:var(--muted)">📅 ${formatDateTime(m.meetingDate)}</div>
         ${m.location?`<div style="font-size:13px;color:var(--muted)">📍 ${m.location}</div>`:''}
         ${m.organizer?`<div style="font-size:13px;color:var(--muted)">👤 ${m.organizer}</div>`:''}
-        ${m.agenda?`<div style="margin-top:4px;font-size:13px;background:var(--bg);padding:8px 10px;border-radius:8px;border-left:3px solid var(--green)"><b>Agenda:</b> ${m.agenda}</div>`:''}
-        ${m.minutes?`<div style="margin-top:4px;font-size:13px;background:#fff8e1;padding:8px 10px;border-radius:8px;border-left:3px solid var(--gold)"><b>Minutes:</b> ${m.minutes}</div>`:''}
+        ${m.agenda?`<div style="margin-top:4px;font-size:13px;background:var(--bg);padding:8px 10px;border-radius:8px;border-left:3px solid var(--green)"><b>${t("agenda")}:</b> ${m.agenda}</div>`:''}
+        ${m.minutes?`<div style="margin-top:4px;font-size:13px;background:#fff8e1;padding:8px 10px;border-radius:8px;border-left:3px solid #f9a825"><b>${t("minutes")}:</b> ${m.minutes}</div>`:''}
         ${isAdmin()?`<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-sm btn-amber" onclick='editMeeting(${JSON.stringify(m).replace(/'/g,"&#39;")})'>Edit</button>
-          <button class="btn btn-sm btn-teal" onclick="openMinutes(${m.id})">Add Minutes</button>
-          <button class="btn btn-sm btn-red" onclick="deleteMeeting(${m.id})">Delete</button>
+          <button class="btn btn-sm btn-amber" onclick='editMeeting(${JSON.stringify(m).replace(/'/g,"&#39;")})'>${t("edit")}</button>
+          <button class="btn btn-sm btn-teal" onclick="openMinutes(${m.id})">${t("add_minutes")}</button>
+          <button class="btn btn-sm btn-red" onclick="deleteMeeting(${m.id})">${t("delete")}</button>
         </div>`:''}
       </div>`).join('')+'</div>';
   }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
 }
 
-function openModal(m=null){editId=m?m.id:null;document.getElementById("modalTitle").textContent=m?"Edit Meeting":"Add Meeting";document.getElementById("fTitle").value=m?.title||"";document.getElementById("fLocation").value=m?.location||"";document.getElementById("fOrganizer").value=m?.organizer||"";document.getElementById("fAgenda").value=m?.agenda||"";document.getElementById("fDesc").value=m?.description||"";document.getElementById("fDate").value=m?.meetingDate?m.meetingDate.slice(0,16):"";document.getElementById("modal").classList.remove("hidden");}
+function openModal(m=null){editId=m?m.id:null;document.getElementById("fTitle").value=m?.title||"";document.getElementById("fLocation").value=m?.location||"";document.getElementById("fOrganizer").value=m?.organizer||"";document.getElementById("fAgenda").value=m?.agenda||"";document.getElementById("fDesc").value=m?.description||"";document.getElementById("fDate").value=m?.meetingDate?m.meetingDate.slice(0,16):"";document.getElementById("modal").classList.remove("hidden");}
 function closeModal(){document.getElementById("modal").classList.add("hidden");}
 function editMeeting(m){openModal(m);}
 async function saveMeeting(){
   const body={title:document.getElementById("fTitle").value,meetingDate:document.getElementById("fDate").value,location:document.getElementById("fLocation").value,organizer:document.getElementById("fOrganizer").value,agenda:document.getElementById("fAgenda").value,description:document.getElementById("fDesc").value};
-  if(!body.title||!body.meetingDate){toast("Title and date required","error");return;}
-  try{if(editId)await api("PUT",`/api/meetings/${editId}`,body);else await api("POST","/api/meetings",body);toast(editId?"Meeting updated!":"Meeting added!");closeModal();load();}catch(e){toast(e.message,"error");}
+  if(!body.title||!body.meetingDate){toast(getLang()==="te"?"శీర్షిక మరియు తేదీ అవసరం":"Title and date required","error");return;}
+  try{if(editId)await api("PUT",`/api/meetings/${editId}`,body);else await api("POST","/api/meetings",body);toast(t("save"));closeModal();load();}catch(e){toast(e.message,"error");}
 }
 function openMinutes(id){minutesId=id;document.getElementById("fMinutes").value="";document.getElementById("minutesModal").classList.remove("hidden");}
-async function saveMinutes(){const m=document.getElementById("fMinutes").value;if(!m){toast("Enter minutes","error");return;}try{await api("PUT",`/api/meetings/${minutesId}/minutes`,m);toast("Minutes saved!");document.getElementById("minutesModal").classList.add("hidden");load();}catch(e){toast(e.message,"error");}}
-async function deleteMeeting(id){if(!confirm("Delete this meeting?"))return;try{await api("DELETE",`/api/meetings/${id}`);toast("Deleted");load();}catch(e){toast(e.message,"error");}}
+async function saveMinutes(){const m=document.getElementById("fMinutes").value;if(!m){toast("Enter minutes","error");return;}try{await api("PUT",`/api/meetings/${minutesId}/minutes`,m);toast(t("save"));document.getElementById("minutesModal").classList.add("hidden");load();}catch(e){toast(e.message,"error");}}
+async function deleteMeeting(id){if(!confirm(getLang()==="te"?"ఈ సమావేశాన్ని తొలగించాలా?":"Delete this meeting?"))return;try{await api("DELETE",`/api/meetings/${id}`);toast(t("delete"));load();}catch(e){toast(e.message,"error");}}
 load();
 </script>
-</body>
-</html>
+</body></html>
