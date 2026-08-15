@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Schemes — Smart Village Portal</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<script src="config.js"></script><script src="lang.js"></script><script src="navbar.js"></script>
+<script>renderNav("schemes")</script>
+<div class="page">
+  <div class="page-header">
+    <h1>📋 <span id="pageTitle"></span></h1>
+    <button class="btn btn-primary" id="addBtn" style="display:none" onclick="document.getElementById('schemeModal').classList.remove('hidden')"></button>
+  </div>
+
+  <!-- Eligibility Checker -->
+  <div style="background:linear-gradient(135deg,var(--green-dark),var(--teal));border-radius:var(--radius-lg);padding:26px;margin-bottom:24px;color:#fff">
+    <div style="font-size:19px;font-weight:700;margin-bottom:4px" id="checkerTitle"></div>
+    <div style="opacity:.85;font-size:13px;margin-bottom:16px" id="checkerSub"></div>
+    <div style="background:rgba(255,255,255,.12);border-radius:11px;padding:18px">
+      <div class="form-row">
+        <div class="form-group"><label style="color:#fff" id="lbl-gender"></label>
+          <select id="eGender" style="background:rgba(255,255,255,.95)"></select>
+        </div>
+        <div class="form-group"><label style="color:#fff" id="lbl-age"></label>
+          <input id="eAge" type="number" min="0" max="120" style="background:rgba(255,255,255,.95)"/>
+        </div>
+        <div class="form-group"><label style="color:#fff" id="lbl-income"></label>
+          <select id="eIncome" style="background:rgba(255,255,255,.95)"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label style="color:#fff" id="lbl-farmer"></label>
+          <select id="eFarmer" style="background:rgba(255,255,255,.95)"></select>
+        </div>
+        <div class="form-group"><label style="color:#fff" id="lbl-land"></label>
+          <select id="eOwnsLand" style="background:rgba(255,255,255,.95)"></select>
+        </div>
+        <div class="form-group"><label style="color:#fff" id="lbl-caste"></label>
+          <select id="eCaste" style="background:rgba(255,255,255,.95)"></select>
+        </div>
+      </div>
+      <button class="btn" id="checkBtn" style="background:#fff;color:var(--green-dark);font-weight:700;padding:10px 24px" onclick="checkEligibility()"></button>
+    </div>
+    <div id="eligibilityResults" style="margin-top:14px"></div>
+  </div>
+
+  <div class="tabs" id="schemeTabs"></div>
+  <div id="schemesList"></div>
+</div>
+
+<div class="modal-overlay hidden" id="schemeModal">
+  <div class="modal modal-wide">
+    <div class="modal-header"><h2 id="schemeModalTitle"></h2><button class="modal-close" onclick="document.getElementById('schemeModal').classList.add('hidden')">✕</button></div>
+    <div class="form-row"><div class="form-group"><label>Scheme Name *</label><input id="sName"/></div><div class="form-group"><label>Scheme Code *</label><input id="sCode"/></div></div>
+    <div class="form-row">
+      <div class="form-group"><label>Category *</label><select id="sCat"><option value="">Select</option><option>FARMER</option><option>WOMEN</option><option>YOUTH</option><option>CHILDREN</option><option>SENIOR_CITIZEN</option><option>EDUCATION</option><option>HEALTH</option><option>HOUSING</option><option>EMPLOYMENT</option><option>OTHER</option></select></div>
+      <div class="form-group"><label>Target Gender</label><select id="sGender"><option value="ALL">All</option><option value="MALE">Male</option><option value="FEMALE">Female</option></select></div>
+    </div>
+    <div class="form-row"><div class="form-group"><label>Min Age</label><input id="sMinAge" type="number"/></div><div class="form-group"><label>Max Age</label><input id="sMaxAge" type="number"/></div></div>
+    <div class="form-row"><div class="form-group"><label>Farmer Required?</label><select id="sFarmer"><option value="">No</option><option value="true">Yes</option></select></div><div class="form-group"><label>Max Income</label><select id="sIncome"><option value="ALL">All</option><option value="BPL">BPL</option><option value="LOW">Low</option><option value="MIDDLE">Middle</option></select></div></div>
+    <div class="form-group"><label>Description *</label><textarea id="sDesc"></textarea></div>
+    <div class="form-group"><label>Benefits</label><textarea id="sBenefits"></textarea></div>
+    <div class="form-group"><label>Documents Required</label><input id="sDocs"/></div>
+    <div class="form-row"><div class="form-group"><label>Application Link</label><input id="sLink"/></div><div class="form-group"><label>Helpline</label><input id="sHelpline"/></div></div>
+    <div class="form-group"><label>Government Dept</label><input id="sDept"/></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('schemeModal').classList.add('hidden')" id="btnCancel"></button><button class="btn btn-primary" onclick="saveScheme()" id="btnSave"></button></div>
+  </div>
+</div>
+
+<script>
+let currentCat="";
+if(isAdmin()) document.getElementById("addBtn").style.display="flex";
+
+const schemeCategories=[
+  ["","",t("all")],
+  ["FARMER","🌾",t("farmers")],
+  ["WOMEN","👩",t("women")],
+  ["HEALTH","🏥",t("health")],
+  ["EDUCATION","📚",t("education")],
+  ["HOUSING","🏠",t("housing")],
+  ["EMPLOYMENT","💼",t("employment")],
+  ["SENIOR_CITIZEN","👴",t("senior")]
+];
+const catBadge={FARMER:"badge-green",WOMEN:"badge-purple",HEALTH:"badge-red",EDUCATION:"badge-blue",HOUSING:"badge-amber",EMPLOYMENT:"badge-teal",SENIOR_CITIZEN:"badge-gray"};
+
+function applyLang(){
+  document.getElementById("pageTitle").textContent   = t("schemes");
+  document.getElementById("addBtn").textContent      = getLang()==="te"?"＋ పథకం జోడించు":"＋ Add Scheme";
+  document.getElementById("checkerTitle").textContent= "✨ " + t("eligibility_checker");
+  document.getElementById("checkerSub").textContent  = getLang()==="te"?"మీ వివరాలు నమోదు చేయండి — అర్హమైన పథకాలు వెంటనే చూడండి":"Fill your details — instantly see schemes you qualify for";
+  document.getElementById("lbl-gender").textContent  = t("gender");
+  document.getElementById("lbl-age").textContent     = t("age");
+  document.getElementById("lbl-income").textContent  = t("income_category");
+  document.getElementById("lbl-farmer").textContent  = t("are_you_farmer");
+  document.getElementById("lbl-land").textContent    = t("own_land");
+  document.getElementById("lbl-caste").textContent   = t("caste_category");
+  document.getElementById("checkBtn").textContent    = "🔍 " + t("check_eligibility");
+  document.getElementById("schemeModalTitle").textContent = getLang()==="te"?"పథకం జోడించు":"Add Government Scheme";
+  document.getElementById("btnCancel").textContent   = t("cancel");
+  document.getElementById("btnSave").textContent     = t("save");
+
+  document.getElementById("eGender").innerHTML = `<option value="">${getLang()==="te"?"లింగం ఎంచుకోండి":"Select gender"}</option><option value="MALE">${t("male")}</option><option value="FEMALE">${t("female")}</option>`;
+  document.getElementById("eIncome").innerHTML = `<option value="">${getLang()==="te"?"ఆదాయ వర్గం ఎంచుకోండి":"Select income"}</option><option value="BPL">${t("bpl")}</option><option value="LOW">${t("low_income")}</option><option value="MIDDLE">${t("middle_income")}</option><option value="ALL">${t("higher_income")}</option>`;
+  document.getElementById("eFarmer").innerHTML = `<option value="false">${t("no")}</option><option value="true">${t("yes")}</option>`;
+  document.getElementById("eOwnsLand").innerHTML = `<option value="false">${t("no")}</option><option value="true">${t("yes")}</option>`;
+  document.getElementById("eCaste").innerHTML = `<option value="none">${t("general")}</option><option value="scst">${t("sc_st")}</option><option value="bc">${t("bc")}</option>`;
+
+  const tabsEl = document.getElementById("schemeTabs");
+  tabsEl.innerHTML = schemeCategories.map(([v,ic,lbl],i)=>
+    `<button class="tab-btn ${i===0?"active":""}" onclick="switchCat('${v}',this)">${ic} ${lbl}</button>`
+  ).join("");
+}
+applyLang();
+
+function switchCat(cat,btn){currentCat=cat;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");loadSchemes();}
+
+async function loadSchemes(){
+  const el=document.getElementById("schemesList");
+  el.innerHTML=`<div style="color:var(--muted);padding:20px">${t("loading")}</div>`;
+  try{
+    const path=currentCat?`/api/schemes?category=${currentCat}`:"/api/schemes";
+    const data=await api("GET",path);
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="ei">📋</div><p>${t("no_schemes")}</p></div>`;return;}
+    el.innerHTML='<div class="card-grid">'+data.map(s=>`
+      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:700;font-size:14px">${s.schemeName}</div>
+          <span class="badge ${catBadge[s.category]||"badge-gray"}" style="flex-shrink:0">${s.category.replace("_"," ")}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">🏷️ ${s.schemeCode} · 👤 ${s.targetGender||"ALL"} ${s.minAge||s.maxAge?"· "+t("age")+": "+(s.minAge||0)+"–"+(s.maxAge||"any"):""} ${s.farmerRequired?"· 🌾 "+t("farmers")+" only":""}</div>
+        <div style="font-size:13px;color:#444;line-height:1.5">${s.description}</div>
+        ${s.benefits?`<div style="background:#e8f5e9;padding:9px 11px;border-radius:8px;font-size:13px;border-left:3px solid var(--green)"><b>${t("benefits")}:</b> ${s.benefits}</div>`:""}
+        ${s.documentsRequired?`<div style="font-size:12px;color:var(--muted)">📄 ${t("documents")}: ${s.documentsRequired}</div>`:""}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          ${s.applicationLink?`<a href="${s.applicationLink}" target="_blank" class="btn btn-sm btn-teal">${t("apply_online")}</a>`:""}
+          ${s.helplineNumber?`<span class="badge badge-blue">📞 ${s.helplineNumber}</span>`:""}
+        </div>
+        ${isAdmin()?`<div><button class="btn btn-xs btn-red" onclick="deleteScheme(${s.id})">${t("delete")}</button></div>`:""}
+      </div>`).join('')+'</div>';
+  }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
+}
+
+async function checkEligibility(){
+  const gender=document.getElementById("eGender").value;
+  const age=parseInt(document.getElementById("eAge").value);
+  const income=document.getElementById("eIncome").value;
+  const farmer=document.getElementById("eFarmer").value==="true";
+  const land=document.getElementById("eOwnsLand").value==="true";
+  const caste=document.getElementById("eCaste").value;
+  if(!gender||!age||!income){toast(getLang()==="te"?"లింగం, వయసు మరియు ఆదాయ వర్గం నమోదు చేయండి":"Fill gender, age and income","error");return;}
+  const el=document.getElementById("eligibilityResults");
+  el.innerHTML=`<div style="color:rgba(255,255,255,.8)">${t("loading")}</div>`;
+  try{
+    const schemes=await api("POST","/api/schemes/check-eligibility",{gender,age,isFarmer:farmer,ownsLand:land,incomeCategory:income,isScSt:caste==="scst",isBc:caste==="bc",isDifferentlyAbled:false});
+    if(!schemes.length){el.innerHTML=`<div style="background:rgba(255,255,255,.15);border-radius:10px;padding:13px;color:#fff">${t("no_schemes")}</div>`;return;}
+    el.innerHTML=`<div style="color:#fff;font-weight:700;font-size:15px;margin-bottom:10px">🎉 ${t("you_qualify")} ${schemes.length} ${t("schemes_label")}</div>`+
+      schemes.map(s=>`
+        <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:13px 15px;margin-bottom:10px;border-left:3px solid rgba(255,255,255,.5)">
+          <div style="font-weight:700;font-size:14px;color:#fff;margin-bottom:5px">${s.schemeName}</div>
+          ${s.benefits?`<div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:5px">💰 ${s.benefits}</div>`:""}
+          ${s.documentsRequired?`<div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:5px">📄 ${s.documentsRequired}</div>`:""}
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${s.applicationLink?`<a href="${s.applicationLink}" target="_blank" class="btn btn-sm btn-teal">${t("apply_online")}</a>`:""}
+            ${s.helplineNumber?`<span style="font-size:12px;color:rgba(255,255,255,.75)">📞 ${s.helplineNumber}</span>`:""}
+          </div>
+        </div>`).join('');
+  }catch(e){el.innerHTML=`<div style="color:#ffcdd2">${e.message}</div>`;}
+}
+
+async function saveScheme(){
+  const body={schemeName:document.getElementById("sName").value,schemeCode:document.getElementById("sCode").value,category:document.getElementById("sCat").value,description:document.getElementById("sDesc").value,benefits:document.getElementById("sBenefits").value,targetGender:document.getElementById("sGender").value,minAge:document.getElementById("sMinAge").value?parseInt(document.getElementById("sMinAge").value):null,maxAge:document.getElementById("sMaxAge").value?parseInt(document.getElementById("sMaxAge").value):null,farmerRequired:document.getElementById("sFarmer").value==="true"?true:null,maxIncomeCategory:document.getElementById("sIncome").value,documentsRequired:document.getElementById("sDocs").value,applicationLink:document.getElementById("sLink").value,helplineNumber:document.getElementById("sHelpline").value,governmentDept:document.getElementById("sDept").value};
+  if(!body.schemeName||!body.category||!body.description){toast(getLang()==="te"?"తప్పనిసరి ఫీల్డ్‌లు పూరించండి":"Fill required fields","error");return;}
+  try{await api("POST","/api/schemes",body);toast(t("save"));document.getElementById("schemeModal").classList.add("hidden");loadSchemes();}catch(e){toast(e.message,"error");}
+}
+async function deleteScheme(id){if(!confirm(getLang()==="te"?"తొలగించాలా?":"Remove?"))return;try{await api("DELETE",`/api/schemes/${id}`);toast(t("delete"));loadSchemes();}catch(e){toast(e.message,"error");}}
+loadSchemes();
+</script>
+</body></html>

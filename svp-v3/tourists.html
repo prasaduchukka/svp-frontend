@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tourism — Smart Village Portal</title>
+<link rel="stylesheet" href="style.css">
+</head><body>
+<script src="config.js"></script><script src="lang.js"></script><script src="navbar.js"></script>
+<script>renderNav("tourists")</script>
+<div class="page">
+  <div class="page-header">
+    <h1>📍 <span id="pageTitle"></span></h1>
+    <button class="btn btn-primary" id="addBtn" style="display:none" onclick="openModal()"></button>
+  </div>
+  <div id="listWrap"></div>
+</div>
+
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="mTitle"></h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-name"></label><input id="fName"/></div>
+      <div class="form-group"><label id="lbl-type"></label><select id="fType"></select></div>
+    </div>
+    <div class="form-group"><label id="lbl-desc"></label><textarea id="fDesc"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-loc"></label><input id="fLoc"/></div>
+      <div class="form-group"><label id="lbl-land"></label><input id="fLand"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label id="lbl-time"></label><input id="fTime"/></div>
+      <div class="form-group"><label id="lbl-fee"></label><input id="fFee"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="btnCancel" onclick="closeModal()"></button>
+      <button class="btn btn-primary" id="btnSave" onclick="saveSpot()"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+let editId=null;
+if(isAdmin()) document.getElementById("addBtn").style.display="flex";
+
+const spotTypes=[
+  ["TEMPLE","🕌",getLang()==="te"?"దేవాలయం":"Temple","badge-amber"],
+  ["LAKE","💧",getLang()==="te"?"చెరువు":"Lake","badge-blue"],
+  ["FOREST","🌳",getLang()==="te"?"అడవి":"Forest","badge-green"],
+  ["HISTORICAL","🏛️",getLang()==="te"?"చారిత్రక":"Historical","badge-purple"],
+  ["WATERFALL","🌊",getLang()==="te"?"జలపాతం":"Waterfall","badge-teal"],
+  ["FARM","🌾",getLang()==="te"?"పొలం":"Farm","badge-green"],
+  ["OTHER",getLang()==="te"?"📍":"📍",t("other"),"badge-gray"]
+];
+
+function applyLang(){
+  document.getElementById("pageTitle").textContent  = t("tourism");
+  document.getElementById("addBtn").textContent     = "＋ " + t("add_spot");
+  document.getElementById("mTitle").textContent     = t("add_spot");
+  document.getElementById("lbl-name").textContent   = t("spot_name");
+  document.getElementById("lbl-type").textContent   = t("type");
+  document.getElementById("lbl-desc").textContent   = t("description");
+  document.getElementById("lbl-loc").textContent    = t("location");
+  document.getElementById("lbl-land").textContent   = t("nearest_landmark");
+  document.getElementById("lbl-time").textContent   = t("best_time");
+  document.getElementById("lbl-fee").textContent    = t("entry_fee");
+  document.getElementById("btnCancel").textContent  = t("cancel");
+  document.getElementById("btnSave").textContent    = t("save");
+  document.getElementById("fType").innerHTML = spotTypes.map(([v,ic,l])=>`<option value="${v}">${ic} ${l}</option>`).join("");
+}
+applyLang();
+
+async function load(){
+  const el=document.getElementById("listWrap");
+  el.innerHTML=`<div style="color:var(--muted);padding:20px">${t("loading")}</div>`;
+  try{
+    const data=await api("GET","/api/tourist-spots");
+    if(!data.length){el.innerHTML=`<div class="empty"><div class="ei">📍</div><p>${t("no_spots")}</p></div>`;return;}
+    el.innerHTML='<div class="card-grid">'+data.map(s=>{
+      const st=spotTypes.find(x=>x[0]===s.type)||["","📍",s.type,"badge-gray"];
+      return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:700;font-size:15px">${st[1]} ${s.name}</div>
+          <span class="badge ${st[3]}" style="flex-shrink:0">${st[2]}</span>
+        </div>
+        ${s.location?`<div style="font-size:13px;color:var(--muted)">📍 ${s.location}</div>`:""}
+        ${s.nearestLandmark?`<div style="font-size:13px;color:var(--muted)">🗺️ ${t("nearest_landmark")}: ${s.nearestLandmark}</div>`:""}
+        ${s.bestTimeToVisit?`<div style="font-size:13px;color:var(--muted)">🌤️ ${t("best_time")}: ${s.bestTimeToVisit}</div>`:""}
+        ${s.entryFee?`<div style="font-size:13px;font-weight:600;color:var(--teal)">🎫 ${t("entry_fee")}: ${s.entryFee}</div>`:""}
+        <div style="font-size:13px;color:#444;line-height:1.5">${s.description}</div>
+        ${isAdmin()?`<div style="display:flex;gap:6px;margin-top:4px">
+          <button class="btn btn-sm btn-amber" onclick='editSpot(${JSON.stringify(s).replace(/"/g,"&quot;")})'>${t("edit")}</button>
+          <button class="btn btn-sm btn-red" onclick="deleteSpot(${s.id})">${t("delete")}</button>
+        </div>`:""}
+      </div>`;
+    }).join('')+'</div>';
+  }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
+}
+
+function openModal(s=null){
+  editId=s?s.id:null;
+  document.getElementById("mTitle").textContent=s?t("edit"):t("add_spot");
+  document.getElementById("fName").value=s?.name||"";
+  document.getElementById("fDesc").value=s?.description||"";
+  document.getElementById("fLoc").value=s?.location||"";
+  document.getElementById("fLand").value=s?.nearestLandmark||"";
+  document.getElementById("fTime").value=s?.bestTimeToVisit||"";
+  document.getElementById("fFee").value=s?.entryFee||"";
+  document.getElementById("fType").value=s?.type||"TEMPLE";
+  document.getElementById("modal").classList.remove("hidden");
+}
+function closeModal(){document.getElementById("modal").classList.add("hidden");}
+function editSpot(s){openModal(s);}
+async function saveSpot(){
+  const body={name:document.getElementById("fName").value,description:document.getElementById("fDesc").value,type:document.getElementById("fType").value,location:document.getElementById("fLoc").value,nearestLandmark:document.getElementById("fLand").value,bestTimeToVisit:document.getElementById("fTime").value,entryFee:document.getElementById("fFee").value};
+  if(!body.name||!body.description){toast(getLang()==="te"?"పేరు మరియు వివరణ అవసరం":"Name and description required","error");return;}
+  try{if(editId)await api("PUT",`/api/tourist-spots/${editId}`,body);else await api("POST","/api/tourist-spots",body);toast(t("save"));closeModal();load();}catch(e){toast(e.message,"error");}
+}
+async function deleteSpot(id){if(!confirm(getLang()==="te"?"తొలగించాలా?":"Delete?"))return;try{await api("DELETE",`/api/tourist-spots/${id}`);toast(t("delete"));load();}catch(e){toast(e.message,"error");}}
+load();
+</script>
+</body></html>
