@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart Village Portal — Chinabhogili</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="config.js"></script><script src="navbar.js"></script>
+<script>renderNav("home")</script>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-title">🏡 Chinabhogili Village</div>
+    <div class="hero-sub">Seethanagaram Mandal &nbsp;·&nbsp; Vizianagaram District &nbsp;·&nbsp; Andhra Pradesh &nbsp;·&nbsp; PIN 535546</div>
+    <div class="hero-quote">
+      <span class="telugu">"మన గ్రామ ప్రజలు బాధ్యతగా, పారదర్శకంగా మరియు ఐకమత్యంగా ఉండాలని నా కోరిక."</span>
+      <span class="english">"My wish is that the people of our village be responsible, transparent and united." — Dedicated to Chinabhogili</span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e8f5e9">📅</div>
+      <div><div class="stat-val" id="sMeetings" style="color:var(--green)">—</div><div class="stat-lbl">Upcoming Meetings</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#ffebee">📢</div>
+      <div><div class="stat-val" id="sComplaints" style="color:var(--red)">—</div><div class="stat-lbl">Open Complaints</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fff3e0">🛒</div>
+      <div><div class="stat-val" id="sBusinesses" style="color:var(--amber)">—</div><div class="stat-lbl">Village Businesses</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#e3f2fd">📋</div>
+      <div><div class="stat-val" id="sSchemes" style="color:var(--blue)">—</div><div class="stat-lbl">Govt Schemes</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f3e5f5">🎉</div>
+      <div><div class="stat-val" id="sFestivals" style="color:var(--purple)">—</div><div class="stat-lbl">Upcoming Festivals</div></div>
+    </div>
+  </div>
+
+  <!-- QUICK ACCESS -->
+  <div class="section-head" style="margin-bottom:16px">
+    <h2>Quick Access</h2><div class="section-line"></div>
+  </div>
+  <div class="module-grid" style="margin-bottom:28px">
+    <a class="module-card" href="meetings.html">   <div class="mc-icon" style="background:#e8f5e9">📅</div><div class="mc-label">Meetings</div>   </a>
+    <a class="module-card" href="complaints.html"> <div class="mc-icon" style="background:#ffebee">📢</div><div class="mc-label">Complaints</div> </a>
+    <a class="module-card" href="businesses.html"> <div class="mc-icon" style="background:#fff3e0">🛒</div><div class="mc-label">Businesses</div> </a>
+    <a class="module-card" href="schemes.html">    <div class="mc-icon" style="background:#e3f2fd">📋</div><div class="mc-label">Govt Schemes</div></a>
+    <a class="module-card" href="budget.html">     <div class="mc-icon" style="background:#e8f5e9">💰</div><div class="mc-label">Budget</div>     </a>
+    <a class="module-card" href="festivals.html">  <div class="mc-icon" style="background:#f3e5f5">🎉</div><div class="mc-label">Festivals</div>  </a>
+    <a class="module-card" href="education.html">  <div class="mc-icon" style="background:#e3f2fd">📚</div><div class="mc-label">Education</div>  </a>
+    <a class="module-card" href="tourists.html">   <div class="mc-icon" style="background:#e0f2f1">📍</div><div class="mc-label">Tourism</div>    </a>
+  </div>
+
+  <!-- BOTTOM GRID -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
+    <!-- Officials -->
+    <div class="card">
+      <div class="section-head" style="margin-bottom:14px"><h2>🏛️ Village Officials</h2></div>
+      <div class="official-card">
+        <div class="official-avatar">👨</div>
+        <div class="official-info">
+          <div class="name">Mr. Ramesh Kumar</div>
+          <div class="role">President (Sarpanch)</div>
+        </div>
+        <span class="badge badge-green">In Office</span>
+      </div>
+      <div class="official-card">
+        <div class="official-avatar">👩</div>
+        <div class="official-info">
+          <div class="name">Ms. Lakshmi Devi</div>
+          <div class="role">Village Revenue Officer (VRO)</div>
+        </div>
+        <span class="badge badge-blue">Revenue</span>
+      </div>
+    </div>
+    <!-- Upcoming Meetings -->
+    <div class="card">
+      <div class="section-head" style="margin-bottom:14px"><h2>📅 Upcoming Meetings</h2><div class="section-line"></div><a href="meetings.html" style="font-size:13px;color:var(--green);text-decoration:none">View all →</a></div>
+      <div id="homeMeetings"><div style="color:var(--muted);font-size:13px">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card">
+    <div class="section-head" style="margin-bottom:16px"><h2>❓ Frequently Asked Questions</h2></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <details style="border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px"><span>🗺️</span> Where is Chinabhogili located?</summary>
+        <p style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">Seethanagaram Mandal, Vizianagaram District, Andhra Pradesh. PIN: 535546.</p>
+      </details>
+      <details style="border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px"><span>📢</span> How do I submit a complaint?</summary>
+        <p style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">Go to the Complaints section and fill in the form. No login needed. You can also attach a photo of the issue.</p>
+      </details>
+      <details style="border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px"><span>📋</span> How to check government scheme eligibility?</summary>
+        <p style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">Visit Govt Schemes → fill gender, age, income, farmer status → instantly see all schemes you qualify for.</p>
+      </details>
+      <details style="border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px"><span>💰</span> How is panchayat money being spent?</summary>
+        <p style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">Budget Transparency page shows every project, fund allocated, and how much has been spent — visible to all.</p>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadStats() {
+  try {
+    const [meetings, complaints, businesses, schemes, festivals] = await Promise.all([
+      api("GET","/api/meetings/upcoming"),
+      api("GET","/api/complaints?status=PENDING"),
+      api("GET","/api/businesses"),
+      api("GET","/api/schemes"),
+      api("GET","/api/festivals/upcoming")
+    ]);
+    document.getElementById("sMeetings").textContent   = meetings.length;
+    document.getElementById("sComplaints").textContent = complaints.length;
+    document.getElementById("sBusinesses").textContent = businesses.length;
+    document.getElementById("sSchemes").textContent    = schemes.length;
+    document.getElementById("sFestivals").textContent  = festivals.length;
+
+    const el = document.getElementById("homeMeetings");
+    if (!meetings.length) {
+      el.innerHTML = '<div class="empty" style="padding:20px"><div class="ei">📅</div><p>No upcoming meetings</p></div>'; return;
+    }
+    el.innerHTML = meetings.slice(0,3).map(m => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;font-size:14px">${m.title}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">📅 ${formatDateTime(m.meetingDate)} &nbsp;·&nbsp; 📍 ${m.location||"Village Hall"}</div>
+      </div>`).join("");
+  } catch(e) { console.log(e.message); }
+}
+loadStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budget — Smart Village Portal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="config.js"></script><script src="navbar.js"></script><script>renderNav("budget")</script>
+<div class="page">
+  <div class="page-header">
+    <h1><span class="ph-icon">💰</span> Panchayat Budget Transparency</h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="yearFilter" onchange="loadAll()" style="padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;background:#fff">
+        <option value="2024-25">2024-25</option><option value="2023-24">2023-24</option><option value="2025-26">2025-26</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal()" id="addBtn" style="display:none">＋ Add Project</button>
+    </div>
+  </div>
+  <div class="stats-row" id="summary"></div>
+  <div class="card" style="margin-bottom:24px" id="progressCard"></div>
+  <div class="section-head" style="margin-bottom:16px"><h2>📂 All Projects</h2><div class="section-line"></div></div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="filterStatus('',this)">All</button>
+    <button class="tab-btn" onclick="filterStatus('PLANNED',this)">Planned</button>
+    <button class="tab-btn" onclick="filterStatus('IN_PROGRESS',this)">In Progress</button>
+    <button class="tab-btn" onclick="filterStatus('COMPLETED',this)">Completed</button>
+  </div>
+  <div id="projectList"></div>
+</div>
+
+<div class="modal-overlay hidden" id="modal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="modalTitle">Add Project</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Financial Year *</label><select id="fYear"><option value="2024-25">2024-25</option><option value="2023-24">2023-24</option><option value="2025-26">2025-26</option></select></div>
+      <div class="form-group"><label>Category *</label>
+        <select id="fCat"><option value="">Select</option><option>ROADS</option><option>DRINKING_WATER</option><option>DRAINAGE</option><option>ELECTRICITY</option><option>SANITATION</option><option>SCHOOL_DEVELOPMENT</option><option>HEALTH_CENTER</option><option>COMMUNITY_HALL</option><option>STREET_LIGHTS</option><option>AGRICULTURE</option><option>WOMEN_WELFARE</option><option>SPORTS</option><option>OTHER</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Project Name *</label><input id="fProject" placeholder="e.g. Road repair — Main street"/></div>
+    <div class="form-group"><label>Description</label><textarea id="fDesc" placeholder="Details about the project..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Allocated Amount (₹) *</label><input id="fAlloc" type="number" placeholder="0"/></div>
+      <div class="form-group"><label>Spent Amount (₹)</label><input id="fSpent" type="number" placeholder="0"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label><select id="fStatus"><option value="PLANNED">Planned</option><option value="IN_PROGRESS">In Progress</option><option value="COMPLETED">Completed</option><option value="ON_HOLD">On Hold</option></select></div>
+      <div class="form-group"><label>Fund Source</label><input id="fFund" placeholder="e.g. 15th Finance Commission"/></div>
+    </div>
+    <div class="form-group"><label>Remarks</label><input id="fRemarks" placeholder="Additional notes..."/></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Save Project</button></div>
+  </div>
+</div>
+
+<script>
+let allProjects=[],currentStatusFilter="",editId=null;
+if(isAdmin()) document.getElementById("addBtn").style.display="flex";
+const statusBadge={PLANNED:"badge-gray",IN_PROGRESS:"badge-blue",COMPLETED:"badge-green",ON_HOLD:"badge-amber",CANCELLED:"badge-red"};
+
+async function loadAll(){
+  const year=document.getElementById("yearFilter").value;
+  try{
+    const [summary,projects]=await Promise.all([api("GET",`/api/budget/summary?year=${year}`),api("GET",`/api/budget?year=${year}`)]);
+    allProjects=projects;renderSummary(summary);renderProjects(allProjects);
+  }catch(e){toast(e.message,"error");}
+}
+
+function renderSummary(s){
+  const pct=s.totalAllocated>0?Math.min(100,Math.round((s.totalSpent/s.totalAllocated)*100)):0;
+  const barColor=pct>90?"var(--red)":pct>60?"var(--amber)":"var(--green)";
+  document.getElementById("summary").innerHTML=`
+    <div class="stat-card"><div class="stat-icon" style="background:#e8f5e9">💰</div><div><div class="stat-val" style="color:var(--green)">${rupee(s.totalAllocated)}</div><div class="stat-lbl">Total Allocated</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#ffebee">💸</div><div><div class="stat-val" style="color:var(--red)">${rupee(s.totalSpent)}</div><div class="stat-lbl">Total Spent</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#e3f2fd">💵</div><div><div class="stat-val" style="color:var(--blue)">${rupee(s.totalRemaining)}</div><div class="stat-lbl">Remaining</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#f3e5f5">📁</div><div><div class="stat-val" style="color:var(--purple)">${s.totalProjects}</div><div class="stat-lbl">Total Projects</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#e8f5e9">✅</div><div><div class="stat-val" style="color:var(--green)">${s.completedProjects}</div><div class="stat-lbl">Completed</div></div></div>`;
+  document.getElementById("progressCard").innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div><div style="font-size:16px;font-weight:600">Overall Budget Utilization — ${s.financialYear}</div><div style="font-size:13px;color:var(--muted);margin-top:3px">How much of the allocated budget has been spent</div></div>
+      <div style="font-size:32px;font-weight:700;color:${barColor}">${pct}%</div>
+    </div>
+    <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:${barColor}"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--muted)">
+      <span>₹0</span><span>Spent: ${rupee(s.totalSpent)}</span><span>${rupee(s.totalAllocated)}</span>
+    </div>`;
+}
+
+function filterStatus(s,btn){currentStatusFilter=s;document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");renderProjects(allProjects);}
+
+function renderProjects(list){
+  const filtered=currentStatusFilter?list.filter(p=>p.status===currentStatusFilter):list;
+  const el=document.getElementById("projectList");
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="ei">💰</div><p>No projects found</p></div>';return;}
+  el.innerHTML='<div class="card-grid">'+filtered.map(p=>{
+    const spent=parseFloat(p.spentAmount)||0;const alloc=parseFloat(p.allocatedAmount)||1;const pct=Math.min(100,Math.round((spent/alloc)*100));const barColor=pct>90?"var(--red)":"var(--green)";
+    return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-weight:700;font-size:15px">${p.projectName}</div>
+        <span class="badge ${statusBadge[p.status]||'badge-gray'}" style="flex-shrink:0">${p.status.replace("_"," ")}</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-gray">${p.category.replace("_"," ")}</span><span class="badge badge-teal">${p.financialYear}</span></div>
+      ${p.description?`<div style="font-size:13px;color:#444">${p.description}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px">
+        <div style="text-align:center;padding:8px;background:var(--bg);border-radius:8px"><div style="font-size:11px;color:var(--muted)">Allocated</div><div style="font-weight:700;color:var(--green);font-size:14px">${rupee(p.allocatedAmount)}</div></div>
+        <div style="text-align:center;padding:8px;background:#fff3e0;border-radius:8px"><div style="font-size:11px;color:var(--muted)">Spent</div><div style="font-weight:700;color:var(--amber);font-size:14px">${rupee(p.spentAmount)}</div></div>
+        <div style="text-align:center;padding:8px;background:#e3f2fd;border-radius:8px"><div style="font-size:11px;color:var(--muted)">Remaining</div><div style="font-weight:700;color:var(--blue);font-size:14px">${rupee(p.remainingAmount)}</div></div>
+      </div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${pct}%;background:${barColor}"></div></div>
+      <div style="font-size:11px;color:var(--muted);text-align:right">${pct}% utilised</div>
+      ${p.fundSource?`<div style="font-size:12px;color:var(--muted)">💸 ${p.fundSource}</div>`:''}
+      ${p.remarks?`<div style="font-size:12px;color:var(--muted)">💬 ${p.remarks}</div>`:''}
+      ${isAdmin()?`<div style="margin-top:4px;display:flex;gap:6px"><button class="btn btn-sm btn-amber" onclick='openEdit(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button><button class="btn btn-sm btn-red" onclick="deleteProject(${p.id})">Delete</button></div>`:''}
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function openModal(p=null){editId=p?p.id:null;document.getElementById("modalTitle").textContent=p?"Edit Project":"Add Project";document.getElementById("fYear").value=p?.financialYear||document.getElementById("yearFilter").value;document.getElementById("fCat").value=p?.category||"";document.getElementById("fProject").value=p?.projectName||"";document.getElementById("fDesc").value=p?.description||"";document.getElementById("fAlloc").value=p?.allocatedAmount||"";document.getElementById("fSpent").value=p?.spentAmount||"";document.getElementById("fStatus").value=p?.status||"PLANNED";document.getElementById("fFund").value=p?.fundSource||"";document.getElementById("fRemarks").value=p?.remarks||"";document.getElementById("modal").classList.remove("hidden");}
+function openEdit(p){openModal(p);}
+function closeModal(){document.getElementById("modal").classList.add("hidden");}
+async function saveProject(){
+  const body={financialYear:document.getElementById("fYear").value,category:document.getElementById("fCat").value,projectName:document.getElementById("fProject").value,description:document.getElementById("fDesc").value,allocatedAmount:parseFloat(document.getElementById("fAlloc").value),spentAmount:parseFloat(document.getElementById("fSpent").value)||0,status:document.getElementById("fStatus").value,fundSource:document.getElementById("fFund").value,remarks:document.getElementById("fRemarks").value};
+  if(!body.projectName||!body.category||isNaN(body.allocatedAmount)){toast("Fill required fields","error");return;}
+  try{if(editId)await api("PUT",`/api/budget/${editId}`,body);else await api("POST","/api/budget",body);toast("Saved!");closeModal();loadAll();}catch(e){toast(e.message,"error");}
+}
+async function deleteProject(id){if(!confirm("Delete?"))return;try{await api("DELETE",`/api/budget/${id}`);toast("Deleted");loadAll();}catch(e){toast(e.message,"error");}}
+loadAll();
+</script>
+</body>
+</html>

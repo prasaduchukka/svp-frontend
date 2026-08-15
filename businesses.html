@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Businesses — Smart Village Portal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script src="config.js"></script><script src="navbar.js"></script><script>renderNav("businesses")</script>
+<div class="page">
+  <div class="page-header">
+    <h1><span class="ph-icon">🛒</span> Village Businesses</h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="openProductSearch()">🔍 Search Products</button>
+      <button class="btn btn-primary" onclick="openBizModal()" id="addBizBtn" style="display:none">＋ Add Shop</button>
+    </div>
+  </div>
+  <div class="search-bar">
+    <input id="searchInput" placeholder="Search by shop name or owner..." oninput="filterShops()"/>
+    <select id="catFilter" onchange="filterShops()">
+      <option value="">All Categories</option>
+      <option>GROCERY</option><option>PHARMACY</option><option>VEGETABLES_FRUITS</option>
+      <option>DAIRY</option><option>HARDWARE</option><option>CLOTHING</option>
+      <option>ELECTRONICS</option><option>AGRICULTURE_SUPPLIES</option>
+      <option>RESTAURANT</option><option>BAKERY</option><option>OTHER</option>
+    </select>
+  </div>
+  <div id="listWrap"></div>
+</div>
+
+<div class="modal-overlay hidden" id="bizModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="bizModalTitle">Register Shop</h2><button class="modal-close" onclick="closeBizModal()">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Shop Name *</label><input id="bShop" placeholder="Shop name"/></div>
+      <div class="form-group"><label>Owner Name *</label><input id="bOwner" placeholder="Owner name"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone *</label><input id="bPhone" placeholder="Mobile number"/></div>
+      <div class="form-group"><label>Category *</label>
+        <select id="bCat"><option value="">Select</option><option>GROCERY</option><option>PHARMACY</option><option>VEGETABLES_FRUITS</option><option>DAIRY</option><option>HARDWARE</option><option>CLOTHING</option><option>ELECTRONICS</option><option>AGRICULTURE_SUPPLIES</option><option>RESTAURANT</option><option>BAKERY</option><option>OTHER</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Address</label><input id="bAddr" placeholder="Address in village"/></div>
+    <div class="form-row">
+      <div class="form-group"><label>Opens At</label><input id="bOpen" placeholder="8:00 AM"/></div>
+      <div class="form-group"><label>Closes At</label><input id="bClose" placeholder="9:00 PM"/></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="bDesc" placeholder="What does this shop sell?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeBizModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBiz()">Save Shop</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="prodModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="prodModalTitle">Add Product</h2><button class="modal-close" onclick="document.getElementById('prodModal').classList.add('hidden')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Product Name *</label><input id="pName" placeholder="e.g. Rice"/></div>
+      <div class="form-group"><label>Price (₹) *</label><input id="pPrice" type="number" placeholder="0.00" step="0.01"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Unit</label><input id="pUnit" placeholder="kg / litre / piece"/></div>
+      <div class="form-group"><label>Available</label>
+        <select id="pAvail"><option value="true">✅ In Stock</option><option value="false">❌ Out of Stock</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="pDesc" placeholder="Optional details..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('prodModal').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="searchProdModal">
+  <div class="modal modal-wide">
+    <div class="modal-header"><h2>🔍 Search Products Across All Shops</h2><button class="modal-close" onclick="document.getElementById('searchProdModal').classList.add('hidden')">✕</button></div>
+    <div class="form-group"><input id="prodSearchInput" placeholder="Type product name e.g. rice, milk, medicine..." oninput="searchProducts()"/></div>
+    <div id="prodSearchResults"><div class="empty"><div class="ei">🔍</div><p>Type to search products across all shops</p></div></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('searchProdModal').classList.add('hidden')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="infoModal">
+  <div class="modal modal-wide">
+    <div class="modal-header"><h2 id="infoModalTitle"></h2><button class="modal-close" onclick="document.getElementById('infoModal').classList.add('hidden')">✕</button></div>
+    <div id="infoModalBody" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('infoModal').classList.add('hidden')">Close</button></div>
+  </div>
+</div>
+
+<script>
+let allBusinesses=[],editBizId=null,currentBizId=null,editProdId=null;
+if(isAdmin()) document.getElementById("addBizBtn").style.display="flex";
+
+const catEmoji={GROCERY:"🛒",PHARMACY:"💊",VEGETABLES_FRUITS:"🥦",DAIRY:"🥛",HARDWARE:"🔧",CLOTHING:"👕",ELECTRONICS:"📱",AGRICULTURE_SUPPLIES:"🌾",RESTAURANT:"🍽️",BAKERY:"🍞",OTHER:"🏪"};
+
+async function load(){
+  const el=document.getElementById("listWrap");el.innerHTML='<div style="color:var(--muted);padding:20px">Loading...</div>';
+  try{allBusinesses=await api("GET","/api/businesses");renderList(allBusinesses);}
+  catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
+}
+
+function renderList(list){
+  const el=document.getElementById("listWrap");
+  if(!list.length){el.innerHTML='<div class="empty"><div class="ei">🛒</div><p>No businesses registered yet</p></div>';return;}
+  el.innerHTML='<div class="card-grid">'+list.map(b=>`
+    <div class="card" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="font-weight:700;font-size:15px">${catEmoji[b.category]||"🏪"} ${b.shopName}</div>
+        <span class="badge ${b.open?'badge-green':'badge-red'}">${b.open?"Open":"Closed"}</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted)">👤 ${b.ownerName} &nbsp;·&nbsp; 📞 ${b.phone}</div>
+      <span class="badge badge-gray">${(b.category||"").replace(/_/g," ")}</span>
+      ${b.address?`<div style="font-size:13px;color:var(--muted)">📍 ${b.address}</div>`:''}
+      ${b.openTime?`<div style="font-size:13px;color:var(--muted)">🕐 ${b.openTime} – ${b.closeTime||"?"}</div>`:''}
+      ${b.description?`<div style="font-size:13px;color:#444;line-height:1.5">${b.description}</div>`:''}
+      <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="viewProducts(${b.id},'${b.shopName.replace(/'/g,"\\'")}')">📦 Products</button>
+        ${isAdmin()?`
+          <button class="btn btn-sm btn-amber" onclick='openBizModal(${JSON.stringify(b).replace(/'/g,"&#39;")})'>Edit</button>
+          <button class="btn btn-sm ${b.open?"btn-red":"btn-primary"}" onclick="toggleOpen(${b.id})">${b.open?"Close":"Open"}</button>
+          <button class="btn btn-sm btn-teal" onclick="openAddProduct(${b.id},'${b.shopName.replace(/'/g,"\\'")}')">＋ Product</button>`:''}
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+function filterShops(){const q=document.getElementById("searchInput").value.toLowerCase();const cat=document.getElementById("catFilter").value;renderList(allBusinesses.filter(b=>(!q||b.shopName.toLowerCase().includes(q)||b.ownerName.toLowerCase().includes(q))&&(!cat||b.category===cat)));}
+
+async function viewProducts(bizId,shopName){
+  try{
+    const prods=await api("GET",`/api/products/business/${bizId}`);
+    const html=prods.length
+      ?prods.map(p=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
+          <div><div style="font-weight:600;font-size:14px">${p.name}</div>${p.description?`<div style="font-size:12px;color:var(--muted)">${p.description}</div>`:''} ${p.unit?`<div style="font-size:12px;color:var(--muted)">Unit: ${p.unit}</div>`:''}</div>
+          <div style="text-align:right">
+            <div style="font-size:19px;font-weight:700;color:var(--green)">₹${p.price}</div>
+            <span class="badge ${p.available?'badge-green':'badge-red'}">${p.available?"In Stock":"Out of Stock"}</span>
+            ${isAdmin()?`<div style="margin-top:5px;display:flex;gap:4px;justify-content:flex-end">
+              <button class="btn btn-xs btn-amber" onclick='openEditProduct(${JSON.stringify(p).replace(/'/g,"&#39;")},${bizId})'>Edit</button>
+              <button class="btn btn-xs ${p.available?"btn-red":"btn-primary"}" onclick="toggleProd(${p.id},${bizId},'${shopName.replace(/'/g,"\\'")}')">Mark ${p.available?"Out":"In"}</button>
+              <button class="btn btn-xs btn-red" onclick="deleteProd(${p.id},${bizId},'${shopName.replace(/'/g,"\\'")}')">Del</button>
+            </div>`:''}
+          </div>
+        </div>`).join('')
+      :'<div class="empty" style="padding:24px"><div class="ei">📦</div><p>No products listed yet</p></div>';
+    document.getElementById("infoModalTitle").textContent=`📦 ${shopName}`;
+    document.getElementById("infoModalBody").innerHTML=html;
+    document.getElementById("infoModal").classList.remove("hidden");
+  }catch(e){toast(e.message,"error");}
+}
+
+function openAddProduct(bizId,shopName){currentBizId=bizId;editProdId=null;document.getElementById("prodModalTitle").textContent=`Add Product — ${shopName}`;["pName","pUnit","pDesc"].forEach(id=>document.getElementById(id).value="");document.getElementById("pPrice").value="";document.getElementById("pAvail").value="true";document.getElementById("prodModal").classList.remove("hidden");}
+function openEditProduct(p,bizId){currentBizId=bizId;editProdId=p.id;document.getElementById("prodModalTitle").textContent="Edit Product";document.getElementById("pName").value=p.name;document.getElementById("pPrice").value=p.price;document.getElementById("pUnit").value=p.unit||"";document.getElementById("pDesc").value=p.description||"";document.getElementById("pAvail").value=p.available?"true":"false";document.getElementById("prodModal").classList.remove("hidden");}
+async function saveProduct(){
+  const body={businessId:currentBizId,name:document.getElementById("pName").value,price:parseFloat(document.getElementById("pPrice").value),unit:document.getElementById("pUnit").value,description:document.getElementById("pDesc").value,available:document.getElementById("pAvail").value==="true"};
+  if(!body.name||isNaN(body.price)){toast("Name and price required","error");return;}
+  try{if(editProdId)await api("PUT",`/api/products/${editProdId}`,body);else await api("POST","/api/products",body);toast("Saved!");document.getElementById("prodModal").classList.add("hidden");viewProducts(currentBizId,"Shop");}catch(e){toast(e.message,"error");}
+}
+async function toggleProd(id,bizId,shopName){try{await api("PUT",`/api/products/${id}/toggle-availability`);toast("Updated");viewProducts(bizId,shopName);}catch(e){toast(e.message,"error");}}
+async function deleteProd(id,bizId,shopName){if(!confirm("Delete product?"))return;try{await api("DELETE",`/api/products/${id}`);toast("Deleted");viewProducts(bizId,shopName);}catch(e){toast(e.message,"error");}}
+
+function openProductSearch(){document.getElementById("prodSearchInput").value="";document.getElementById("prodSearchResults").innerHTML='<div class="empty"><div class="ei">🔍</div><p>Type to search</p></div>';document.getElementById("searchProdModal").classList.remove("hidden");}
+async function searchProducts(){
+  const q=document.getElementById("prodSearchInput").value.trim();const el=document.getElementById("prodSearchResults");
+  if(q.length<2){el.innerHTML='<div class="empty"><p>Type at least 2 characters</p></div>';return;}
+  try{
+    const prods=await api("GET",`/api/products/search?name=${encodeURIComponent(q)}`);
+    if(!prods.length){el.innerHTML='<div class="empty"><p>No products found</p></div>';return;}
+    el.innerHTML=prods.map(p=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--bg);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
+        <div><div style="font-weight:600;font-size:14px">${p.name}</div><div style="font-size:12px;color:var(--muted)">🏪 ${p.shopName}${p.unit?" · "+p.unit:""}</div></div>
+        <div style="text-align:right"><div style="font-size:18px;font-weight:700;color:var(--green)">₹${p.price}</div><span class="badge ${p.available?"badge-green":"badge-red"}">${p.available?"In Stock":"Out of Stock"}</span></div>
+      </div>`).join('');
+  }catch(e){el.innerHTML=`<div class="empty"><p>${e.message}</p></div>`;}
+}
+
+function openBizModal(b=null){editBizId=b?b.id:null;document.getElementById("bizModalTitle").textContent=b?"Edit Shop":"Register Shop";document.getElementById("bShop").value=b?.shopName||"";document.getElementById("bOwner").value=b?.ownerName||"";document.getElementById("bPhone").value=b?.phone||"";document.getElementById("bCat").value=b?.category||"";document.getElementById("bAddr").value=b?.address||"";document.getElementById("bOpen").value=b?.openTime||"";document.getElementById("bClose").value=b?.closeTime||"";document.getElementById("bDesc").value=b?.description||"";document.getElementById("bizModal").classList.remove("hidden");}
+function closeBizModal(){document.getElementById("bizModal").classList.add("hidden");}
+async function saveBiz(){
+  const body={shopName:document.getElementById("bShop").value,ownerName:document.getElementById("bOwner").value,phone:document.getElementById("bPhone").value,category:document.getElementById("bCat").value,address:document.getElementById("bAddr").value,openTime:document.getElementById("bOpen").value,closeTime:document.getElementById("bClose").value,description:document.getElementById("bDesc").value};
+  if(!body.shopName||!body.ownerName||!body.phone||!body.category){toast("Fill required fields","error");return;}
+  try{if(editBizId)await api("PUT",`/api/businesses/${editBizId}`,body);else await api("POST","/api/businesses",body);toast("Saved!");closeBizModal();load();}catch(e){toast(e.message,"error");}
+}
+async function toggleOpen(id){try{await api("PUT",`/api/businesses/${id}/toggle-open`);toast("Status updated");load();}catch(e){toast(e.message,"error");}}
+load();
+</script>
+</body>
+</html>
