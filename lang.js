@@ -47,8 +47,8 @@ const TRANSLATIONS = {
   required:     { en: "Required",     te: "తప్పనిసరి" },
 
   // HOME
-  village_name:       { en: "Chinabhogili Village",     te: "చినభోగిలి గ్రామం" },
-  village_sub:        { en: "Seethanagaram Mandal · Vizianagaram · Andhra Pradesh · PIN 535546", te: "సీతానగరం మండలం · విజయనగరం · ఆంధ్రప్రదేశ్ · పిన్ 535546" },
+  village_name:       { en: "Venkataraidupeta Village",     te: "వెంకటరాయుడుపేట గ్రామం" },
+  village_sub:        { en: "Parvathipuram Mandal · Parvathipuram Manyam · Andhra Pradesh · PIN 535522", te: "పార్వతీపురం మండలం · పార్వతీపురం మన్యం · ఆంధ్రప్రదేశ్ · పిన్ 535522" },
   quote_telugu:       { en: '"My wish is that the people of our village be responsible, transparent and united."', te: '"మన గ్రామ ప్రజలు బాధ్యతగా, పారదర్శకంగా మరియు ఐకమత్యంగా ఉండాలని నా కోరిక."' },
   quick_access:       { en: "Quick Access",             te: "త్వరిత యాక్సెస్" },
   village_officials:  { en: "Village Officials",        te: "గ్రామ అధికారులు" },
