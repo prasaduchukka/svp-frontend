@@ -1,5 +1,6 @@
 // const BASE_URL = "http://localhost:8089";
-const BASE_URL = "https://svp-backend-1.onrender.com";
+// const BASE_URL = "https://svp-backend-1.onrender.com";
+const BASE_URL = "https://svp-backend-tt57.onrender.com";
 function getToken() { return localStorage.getItem("svp_token"); }
 function getUser()  { return JSON.parse(localStorage.getItem("svp_user") || "null"); }
 function isAdmin()  { const u = getUser(); return u && (u.role === "ADMIN" || u.role === "PANCHAYAT"); }
